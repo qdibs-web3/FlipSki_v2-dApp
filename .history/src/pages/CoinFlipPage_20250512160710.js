@@ -319,7 +319,7 @@ const CoinFlipPage = () => {
             <ul>{gameHistory.map((game) => (<li key={game.gameId} className={game.won ? "win-history" : "loss-history"}>Game #{game.gameId}: Result: {game.result} — {game.won ? `✅ Won ${game.payout} ETH` : `❌ Loss (Payout: ${game.payout} ETH)`}</li>))}</ul>
           )}
           {showHistory && gameHistory.length === 0 && (
-            <p>No wager history yet.</p>
+            <p>No Wager history yet.</p>
           )}
         </div>
 
