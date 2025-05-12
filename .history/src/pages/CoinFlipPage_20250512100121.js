@@ -14,9 +14,9 @@ import {
   baseSepoliaChain,
 } from "../config";
 import CoinFlipETHABI from "../abis/CoinFlipETH.json";
-import coinImage from "../assets/flipski.gif";
-import headsImage from "../assets/flip.png";
-import tailsImage from "../assets/ski.png";
+import coinImage from "../assets/heads.png";
+import headsImage from "../assets/heads.png";
+import tailsImage from "../assets/tails.png";
 import "../styles/CoinFlipPage.css";
 import logo from "../assets/logo.png";
 
@@ -278,6 +278,8 @@ const CoinFlipPage = () => {
           wagered: wageredAmountDisplay,
           payout: payoutAmount,
         });
+        fetchEthBalance();
+        fetchGameHistory();
       } else {
         console.error("GameSettled event was NOT found or not correctly decoded for player:", walletAddress, "Full transaction receipt:", receipt, "All raw logs from receipt:", receipt.logs);
         setError("Could not determine game outcome. Please ensure your ABI (CoinFlipETH.json) is up-to-date. Check browser console for detailed logs.");
@@ -294,11 +296,6 @@ const CoinFlipPage = () => {
       }
     } finally {
       setIsFlipping(false);
-      // Fetch balance and history after animation is done (isFlipping is false)
-      if (walletAddress) { // Ensure walletAddress is still valid before fetching
-        fetchEthBalance();
-        fetchGameHistory();
-      }
     }
   };
 
@@ -310,7 +307,7 @@ return (
       {walletAddress && (
         <div className="wallet-info-active">
           <p>
-            Wallet : <span className="wallet-address">{walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}</span>
+            Wallet: <span className="wallet-address">{walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}</span>
           </p>
           <p>
             Balance:{" "}

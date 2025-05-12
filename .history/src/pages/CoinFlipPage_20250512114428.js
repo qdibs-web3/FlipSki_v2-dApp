@@ -78,16 +78,19 @@ const CoinFlipPage = () => {
   }, [walletAddress]); // Dependency is now only walletAddress
 
   const fetchEthBalance = useCallback(async () => {
+    console.log(`fetchEthBalance called. isFlipping: ${isFlipping}, walletAddress: ${!!walletAddress}`);
     if (walletAddress && publicClient) {
       try {
         const balance = await publicClient.getBalance({ address: walletAddress });
         setEthBalance(formatEther(balance));
+        console.log("fetchEthBalance: Balance updated.");
       } catch (err) {
         console.error("Error fetching ETH balance:", err);
         setError("Could not fetch ETH balance.");
       }
     }
-  }, [walletAddress, publicClient]);
+  }, [walletAddress, publicClient, isFlipping]); // isFlipping added to see its state when called
+  
 
   const fetchGameHistory = useCallback(async () => {
     if (!publicClient || !walletAddress) return;

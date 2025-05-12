@@ -78,19 +78,31 @@ const CoinFlipPage = () => {
   }, [walletAddress]); // Dependency is now only walletAddress
 
   const fetchEthBalance = useCallback(async () => {
+    console.log(`fetchEthBalance called. isFlipping: ${isFlipping}, walletAddress: ${!!walletAddress}`);
     if (walletAddress && publicClient) {
       try {
         const balance = await publicClient.getBalance({ address: walletAddress });
         setEthBalance(formatEther(balance));
+        console.log("fetchEthBalance: Balance updated.");
       } catch (err) {
         console.error("Error fetching ETH balance:", err);
         setError("Could not fetch ETH balance.");
       }
     }
-  }, [walletAddress, publicClient]);
+  }, [walletAddress, publicClient, isFlipping]); // isFlipping added to see its state when called
+  
 
   const fetchGameHistory = useCallback(async () => {
-    if (!publicClient || !walletAddress) return;
+    console.log(`fetchGameHistory called. isFlipping: ${isFlipping}, walletAddress: ${!!walletAddress}`);
+    if (isFlipping) {
+      console.log("fetchGameHistory: Skipping fetch because isFlipping is true.");
+      return;
+    }
+    if (!publicClient || !walletAddress) {
+      console.log("fetchGameHistory: Skipping fetch because no publicClient or walletAddress.");
+      return;
+    }
+    console.log("fetchGameHistory: Proceeding with fetch.");
     try {
       const gameSettledEventAbi = CoinFlipETHABI.abi.find(
         (item) => item.name === "GameSettled" && item.type === "event"

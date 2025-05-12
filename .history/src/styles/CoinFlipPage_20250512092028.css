@@ -7,7 +7,7 @@
   min-height: calc(100vh - 60px); /* Adjust based on Navbar height */
   box-sizing: border-box;
   /* Animated Gradient Background - Copied from LandingPage.css */
-  background: linear-gradient(45deg, #ffffff, #007bff, #39ff14, #007bff, #39ff14, #007bff);
+  background: linear-gradient(45deg, #ffffff, #007bff, #f398ff, #007bff, #f398ff, #007bff);
   background-size: 400% 400%;
   animation: matrixGradient 15s ease infinite;
   overflow: hidden; /* Prevent scrollbars from gradient */
@@ -25,7 +25,7 @@
   width: 100%;
   height: auto;
   position: absolute;
-  top: 12px;
+  top: 8px;
   left: 20px;
 }
 
@@ -62,7 +62,7 @@
   background-color: rgba(0, 0, 0, 0.3);
   padding: 0.2rem 0.5rem;
   border-radius: 4px;
-  color: #ffffff; /* Merged from second definition */
+  color: #4caf50; /* Merged from second definition */
 }
 
 .coinflip-controls {
@@ -72,9 +72,9 @@
   padding: 30px;
   max-width: 500px;
   margin: 40px auto;
-  background-color: #222;
+  background-color: #1e1e1e;
   border-radius: 16px;
-  box-shadow: 0 0 20px rgba(0, 123, 255);
+  box-shadow: 0 0 20px rgba(0, 255, 120, 0.2);
   color: white;
   font-family: 'Segoe UI', sans-serif;
   position: relative; /* Added to ensure proper stacking context */
@@ -121,7 +121,7 @@
   padding: 10px;
   border-radius: 6px;
   border: 1px solid #ccc;
-  background-color: #333;
+  background-color: #2e2e2e;
   color: #fff;
   font-size: 16px;
   outline: none;
@@ -203,15 +203,15 @@
   color: #f0f0f0;
   max-width: 300px;
   text-align: center;
-  box-shadow: 0 0 20px rgba(0, 123, 255);
+  box-shadow: 0 0 10px rgba(0, 255, 200, 0.2);
   margin: 0; /* Remove margin since it's now absolutely positioned */
 }
 
 
 .wallet-info-active p {
+  margin: 2px 0;
   font-size: 16px;
   font-weight: bolder;
-  text-align: left;
 }
 
 .balance-info {
@@ -220,7 +220,7 @@
 }
 
 .connect-wallet-button {
-  background-color: #007bff;
+  background-color: #4a90e2;
   color: white;
   padding: 12px 24px;
   font-size: 16px;
@@ -245,7 +245,7 @@
 /* Wallet Error */
 .wallet-warning {
   color: #ff4c4c;
-  background-color: #222;
+  background-color: #2e1e1e;
   padding: 10px 15px;
   border-left: 4px solid red;
   border-radius: 6px;
@@ -289,15 +289,13 @@
 }
 
 .coin-placeholder {
-  color: #007bff;
-  font-size: 22px;
+  color: #00ff62;
+  font-size: 20px;
   padding: 20px;
-  background-color: #222;
-  box-shadow: 0 0 20px rgba(0, 123, 255);
+  background-color: #1f1f1f;
   border-radius: 10px;
   font-weight: bolder;
   text-align: center;
-  margin-top: 100px;
 }
 
 /* Responsive */

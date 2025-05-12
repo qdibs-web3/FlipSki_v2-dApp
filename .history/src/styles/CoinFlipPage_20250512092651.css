@@ -7,7 +7,7 @@
   min-height: calc(100vh - 60px); /* Adjust based on Navbar height */
   box-sizing: border-box;
   /* Animated Gradient Background - Copied from LandingPage.css */
-  background: linear-gradient(45deg, #ffffff, #007bff, #39ff14, #007bff, #39ff14, #007bff);
+  background: linear-gradient(45deg, #ffffff, #007bff, #f398ff, #007bff, #f398ff, #007bff);
   background-size: 400% 400%;
   animation: matrixGradient 15s ease infinite;
   overflow: hidden; /* Prevent scrollbars from gradient */
@@ -25,7 +25,7 @@
   width: 100%;
   height: auto;
   position: absolute;
-  top: 12px;
+  top: 8px;
   left: 20px;
 }
 
@@ -209,9 +209,9 @@
 
 
 .wallet-info-active p {
+  margin: 2px 0;
   font-size: 16px;
   font-weight: bolder;
-  text-align: left;
 }
 
 .balance-info {

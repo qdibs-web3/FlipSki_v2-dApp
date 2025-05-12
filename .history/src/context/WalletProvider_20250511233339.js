@@ -1,5 +1,5 @@
 // src/context/WalletProvider.js
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react"; // Added useEffect for logging
 
 import {
   useConnect,
@@ -8,7 +8,6 @@ import {
   useUser,
   useConnectionStatus,
   metamaskWallet,
-  useSigner, // Import useSigner
 } from "@thirdweb-dev/react";
 
 const WalletContext = createContext({
@@ -20,40 +19,39 @@ const WalletContext = createContext({
   isConnected: false,
   userRelatedIsLoading: false,
   userRelatedError: null,
-  activeWalletInstance: null, // This will now be the signer object
+  activeWalletInstance: null,
 });
 
 export const WalletProvider = ({ children }) => {
   const address = useAddress();
-  // Remove activeWallet from useConnect as it was undefined
-  const { connect, isConnecting: sdkIsConnecting, error: connectError } = useConnect(); 
+  const { connect, isConnecting, activeWallet: thirdwebActiveWallet, error: connectError } = useConnect();
   const { disconnect } = useDisconnect();
   const connectionStatus = useConnectionStatus();
-  const signer = useSigner(); // Get the signer instance
   const { isLoading: isLoadingUser, error: errorUser } = useUser(); 
   const [isConnectActionLoading, setIsConnectActionLoading] = useState(false);
 
   const userRelatedError = errorUser || connectError;
-  const overallIsConnecting = sdkIsConnecting || isConnectActionLoading;
-  // Update isConnected logic to use the presence of a signer
-  const calculatedIsConnected = connectionStatus === "connected" && !!signer;
+  const overallIsConnecting = isConnecting || isConnectActionLoading;
+  const calculatedIsConnected = connectionStatus === "connected" && !!thirdwebActiveWallet;
 
+  // Diagnostic Logging
   useEffect(() => {
     console.log("WalletProvider State Update:");
     console.log("  - address (from useAddress):", address);
     console.log("  - connectionStatus (from useConnectionStatus):", connectionStatus);
-    console.log("  - signer (from useSigner):", signer);
-    console.log("  - sdkIsConnecting (from useConnect):", sdkIsConnecting);
+    console.log("  - thirdwebActiveWallet (from useConnect):", thirdwebActiveWallet);
+    console.log("  - isConnecting (from useConnect):", isConnecting);
     console.log("  - isConnectActionLoading (local state):", isConnectActionLoading);
     console.log("  - overallIsConnecting (combined):", overallIsConnecting);
     console.log("  - calculatedIsConnected (logic):", calculatedIsConnected);
-    if (signer) {
-      console.log("  - signer details:", {
-        provider: !!signer.provider,
-        // You can log other signer properties if needed
+    if (thirdwebActiveWallet) {
+      console.log("  - thirdwebActiveWallet details:", {
+        provider: !!thirdwebActiveWallet.getProvider(),
+        signer: !!thirdwebActiveWallet.getSigner(),
+        // Add any other relevant properties you want to check
       });
     }
-  }, [address, connectionStatus, signer, sdkIsConnecting, isConnectActionLoading, overallIsConnecting, calculatedIsConnected]);
+  }, [address, connectionStatus, thirdwebActiveWallet, isConnecting, isConnectActionLoading, overallIsConnecting, calculatedIsConnected]);
 
   const connectWallet = async () => {
     setIsConnectActionLoading(true);
@@ -89,10 +87,10 @@ export const WalletProvider = ({ children }) => {
         disconnectWallet,
         connectionStatus,
         isConnecting: overallIsConnecting,
-        isConnected: calculatedIsConnected,
+        isConnected: calculatedIsConnected, // Use the logged variable
         userRelatedIsLoading: isLoadingUser,
         userRelatedError,
-        activeWalletInstance: signer || null, // Provide the signer as the active instance
+        activeWalletInstance: thirdwebActiveWallet || null,
       }}
     >
       {children}

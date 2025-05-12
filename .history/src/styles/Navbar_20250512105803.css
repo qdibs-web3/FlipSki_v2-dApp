@@ -62,3 +62,31 @@
   color: red;
   border-color: red;
 }
+
+.connect-button1 {
+  background-color: transparent;
+  border: 1px solid #00ff41;
+  color: #00ff41;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  font-weight: bold;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+  font-family: inherit;
+}
+
+.connect-button1:hover {
+  background-color: rgba(0, 255, 65, 0.1);
+  box-shadow: 0 0 8px rgba(0, 255, 65, 0.5);
+}
+
+.disconnect-button {
+  border-color: #ff416c;
+  color: #ff416c;
+}
+
+.disconnect-button:hover {
+  background-color: rgba(255, 65, 108, 0.1);
+  box-shadow: 0 0 8px rgba(255, 65, 108, 0.5);
+}

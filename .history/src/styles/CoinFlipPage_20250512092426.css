@@ -7,7 +7,7 @@
   min-height: calc(100vh - 60px); /* Adjust based on Navbar height */
   box-sizing: border-box;
   /* Animated Gradient Background - Copied from LandingPage.css */
-  background: linear-gradient(45deg, #ffffff, #007bff, #39ff14, #007bff, #39ff14, #007bff);
+  background: linear-gradient(45deg, #ffffff, #007bff, #f398ff, #007bff, #f398ff, #007bff);
   background-size: 400% 400%;
   animation: matrixGradient 15s ease infinite;
   overflow: hidden; /* Prevent scrollbars from gradient */
@@ -25,7 +25,7 @@
   width: 100%;
   height: auto;
   position: absolute;
-  top: 12px;
+  top: 8px;
   left: 20px;
 }
 
@@ -74,7 +74,7 @@
   margin: 40px auto;
   background-color: #222;
   border-radius: 16px;
-  box-shadow: 0 0 20px rgba(0, 123, 255);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.6);
   color: white;
   font-family: 'Segoe UI', sans-serif;
   position: relative; /* Added to ensure proper stacking context */
@@ -203,15 +203,15 @@
   color: #f0f0f0;
   max-width: 300px;
   text-align: center;
-  box-shadow: 0 0 20px rgba(0, 123, 255);
+  box-shadow: 0 0 10px rgba(0, 255, 200, 0.2);
   margin: 0; /* Remove margin since it's now absolutely positioned */
 }
 
 
 .wallet-info-active p {
+  margin: 2px 0;
   font-size: 16px;
   font-weight: bolder;
-  text-align: left;
 }
 
 .balance-info {
@@ -293,7 +293,7 @@
   font-size: 22px;
   padding: 20px;
   background-color: #222;
-  box-shadow: 0 0 20px rgba(0, 123, 255);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.6);
   border-radius: 10px;
   font-weight: bolder;
   text-align: center;

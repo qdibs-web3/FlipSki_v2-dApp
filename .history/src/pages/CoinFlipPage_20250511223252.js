@@ -1,42 +1,36 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useWallet } from "../context/WalletProvider";
-import {
-  createPublicClient,
-  http,
-  createWalletClient,
-  custom,
-  parseEther,
-  formatEther,
-  decodeEventLog,
-} from "viem";
-import {
-  COINFLIP_CONTRACT_ADDRESS,
-  baseSepoliaChain,
-} from "../config";
+import {createPublicClient,http,createWalletClient,custom,parseEther,formatEther,decodeEventLog,} from "viem";
+import {COINFLIP_CONTRACT_ADDRESS, baseSepoliaChain,} from "../config";
 import CoinFlipETHABI from "../abis/CoinFlipETH.json";
-import coinImage from "../assets/flipski.gif";
-import headsImage from "../assets/flip.png";
-import tailsImage from "../assets/ski.png";
+import coinImage from "../assets/heads.png";
+import headsImage from "../assets/heads.png";
+import tailsImage from "../assets/tails.png";
 import "../styles/CoinFlipPage.css";
-import logo from "../assets/logo.png";
+import logo from "../assets/nav.png";
 
 const CoinFlipPage = () => {
   const {
     walletAddress,
-    userRelatedError,
-    activeWalletInstance, // This is now the signer from useSigner()
+    connectWallet,
+    disconnectWallet,
     isConnecting,
     isConnected,
+    connectionStatus,
+    userRelatedIsLoading,
+    userRelatedError,
+    account, // 🛠️ Make sure your WalletProvider provides this
   } = useWallet();
 
   const [selectedSide, setSelectedSide] = useState(null);
   const [wager, setWager] = useState("0.001");
-  const [isFlipping, setIsFlipping] = useState(false);
-  const [isSubmittingTransaction, setIsSubmittingTransaction] = useState(false);
+  const [isFlipping, setIsFlipping] = useState(false); // For the animation itself
+  const [isSubmittingTransaction, setIsSubmittingTransaction] = useState(false); // For transaction confirmation period
   const [flipResult, setFlipResult] = useState(null);
   const [error, setError] = useState("");
   const [ethBalance, setEthBalance] = useState("0");
   const [gameHistory, setGameHistory] = useState([]);
+  const [isWalletLoading, setIsWalletLoading] = useState(false);
   const presetWagers = ["0.001", "0.005", "0.01"];
 
   const publicClient = createPublicClient({
@@ -45,37 +39,31 @@ const CoinFlipPage = () => {
   });
 
   const getWalletClient = useCallback(async () => {
-    // Wallet address is crucial for account actions
-    if (!walletAddress) {
-      console.error("CoinFlipPage: Wallet address not available for getWalletClient.");
+    if (!account || !account.connector) {
+      console.error("Wallet account or connector not available from AGW.");
       setError(
-        "Wallet address not found. Please ensure your wallet is connected."
+        "Wallet connector not available. Please ensure your Base wallet is connected and configured correctly."
       );
       return null;
     }
-
-    // For viem custom transport with MetaMask, window.ethereum is the EIP-1193 provider
-    if (typeof window.ethereum === "undefined") {
-      console.error("CoinFlipPage: window.ethereum is not available. MetaMask or compatible provider not found.");
-      setError(
-        "MetaMask (or a compatible EIP-1193 provider) not found. Please install MetaMask."
-      );
-      return null;
-    }
-
     try {
-      console.log("CoinFlipPage: Using window.ethereum as the provider for viem.");
+      const provider = await account.connector.getProvider();
+      if (!provider) {
+        console.error("Failed to get provider from Base connector.");
+        setError("Failed to get provider from wallet connector.");
+        return null;
+      }
       return createWalletClient({
-        account: walletAddress, // Ensure walletAddress is correctly passed
+        account: account.address,
         chain: baseSepoliaChain,
-        transport: custom(window.ethereum),
+        transport: custom(provider),
       });
     } catch (err) {
-      console.error("CoinFlipPage: Error creating wallet client with window.ethereum:", err);
-      setError("Error initializing wallet client. Ensure your wallet is compatible and try again.");
+      console.error("Error getting provider from connector:", err);
+      setError("Error initializing wallet client.");
       return null;
     }
-  }, [walletAddress]); // Dependency is now only walletAddress
+  }, [account]);
 
   const fetchEthBalance = useCallback(async () => {
     if (walletAddress && publicClient) {
@@ -126,26 +114,22 @@ const CoinFlipPage = () => {
   }, [publicClient, walletAddress]);
 
   useEffect(() => {
-    if (walletAddress) {
-        fetchEthBalance();
-    }
-  }, [walletAddress, fetchEthBalance]);
+    fetchEthBalance();
+  }, [fetchEthBalance]);
 
   useEffect(() => {
-    if (walletAddress) {
-        fetchGameHistory();
-        const interval = setInterval(fetchGameHistory, 30000); 
-        return () => clearInterval(interval);
-    }
-  }, [walletAddress, fetchGameHistory]);
+    fetchGameHistory();
+    const interval = setInterval(fetchGameHistory, 30000); 
+    return () => clearInterval(interval);
+  }, [fetchGameHistory]);
 
   const handleDegen = async () => {
     setError("");
     setFlipResult(null);
 
-    if (!isConnected) { 
-      setError("Connect wallet first (from the navigation bar). Ensure it is fully connected.");
-      setTimeout(() => setError(""), 4000);
+    if (!walletAddress) {
+      setError("Connect wallet first.");
+      setTimeout(() => setError(""), 3000);
       return;
     }
 
@@ -192,9 +176,7 @@ const CoinFlipPage = () => {
     }
 
     const walletClient = await getWalletClient();
-    if (!walletClient) {
-        return;
-    }
+    if (!walletClient) return;
 
     setIsSubmittingTransaction(true);
     const currentWagerForFlip = wager; 
@@ -203,27 +185,18 @@ const CoinFlipPage = () => {
       const wagerInWei = parseEther(currentWagerForFlip);
       const choiceAsNumber = selectedSide === "heads" ? 0 : 1;
 
-      const contractCallParams = {
+      const flipTxHash = await walletClient.writeContract({
         address: COINFLIP_CONTRACT_ADDRESS,
         abi: CoinFlipETHABI.abi,
         functionName: "flip",
         args: [choiceAsNumber],
         value: wagerInWei,
-        account: walletClient.account,
-        gas: BigInt(300000), // Explicitly set a higher gas limit (e.g., 300,000)
-      };
-
-      console.log("CoinFlipPage: Attempting to call contract with params:", contractCallParams);
-
-      const flipTxHash = await walletClient.writeContract(contractCallParams);
-      
-      console.log("CoinFlipPage: Transaction hash received:", flipTxHash);
+        account: walletClient.account, 
+      });
 
       const receipt = await publicClient.waitForTransactionReceipt({
         hash: flipTxHash,
       });
-      
-      console.log("CoinFlipPage: Transaction receipt received:", receipt);
 
       setIsSubmittingTransaction(false);
       setIsFlipping(true); 
@@ -237,6 +210,7 @@ const CoinFlipPage = () => {
 
       for (const log of receipt.logs) {
         try {
+          // Corrected: Use imported decodeEventLog utility
           const decodedLog = decodeEventLog({
             abi: CoinFlipETHABI.abi,
             data: log.data,
@@ -278,6 +252,8 @@ const CoinFlipPage = () => {
           wagered: wageredAmountDisplay,
           payout: payoutAmount,
         });
+        fetchEthBalance();
+        fetchGameHistory();
       } else {
         console.error("GameSettled event was NOT found or not correctly decoded for player:", walletAddress, "Full transaction receipt:", receipt, "All raw logs from receipt:", receipt.logs);
         setError("Could not determine game outcome. Please ensure your ABI (CoinFlipETH.json) is up-to-date. Check browser console for detailed logs.");
@@ -294,23 +270,18 @@ const CoinFlipPage = () => {
       }
     } finally {
       setIsFlipping(false);
-      // Fetch balance and history after animation is done (isFlipping is false)
-      if (walletAddress) { // Ensure walletAddress is still valid before fetching
-        fetchEthBalance();
-        fetchGameHistory();
-      }
     }
   };
-
+// End of Part 1
 return (
   <div className="coinflip-container">
     <div className="coinflip-box">
       <img src={logo} alt="GuntFlip ETH" className="page-title" />
 
-      {walletAddress && (
+      {walletAddress ? (
         <div className="wallet-info-active">
           <p>
-            Wallet : <span className="wallet-address">{walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}</span>
+            Connected: <span className="wallet-address">{walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}</span>
           </p>
           <p>
             Balance:{" "}
@@ -319,6 +290,14 @@ return (
             </span>
           </p>
         </div>
+      ) : (
+        <button
+          onClick={connectWallet}
+          disabled={isConnecting || isWalletLoading}
+          className="connect-wallet-button"
+        >
+          {isConnecting || isWalletLoading ? "Connecting..." : "Connect Wallet"}
+        </button>
       )}
 
       {userRelatedError && (
@@ -360,7 +339,7 @@ return (
             )}
           </div>
         ) : (
-          <div className="coin-placeholder">Make your wager and FLIPSKI!</div>
+          <div className="coin-placeholder">Make your coin flip bet!</div>
         )}
       </div>
 
@@ -372,13 +351,13 @@ return (
             className={selectedSide === "heads" ? "selected" : ""}
             onClick={() => setSelectedSide("heads")}
           >
-            FLIP
+            Heads
           </button>
           <button
             className={selectedSide === "tails" ? "selected" : ""}
             onClick={() => setSelectedSide("tails")}
           >
-            SKI
+            Tails
           </button>
         </div>
 
@@ -389,7 +368,7 @@ return (
             onChange={(e) => setWager(e.target.value)}
             placeholder="Enter wager in ETH"
             step="0.001"
-            min={presetWagers[0]}
+            min={presetWagers[0]} // A suggestion, actual min comes from contract
           />
           <div className="preset-wagers">
             {presetWagers.map((amount) => (
@@ -403,15 +382,9 @@ return (
         <button
           className="degen-button"
           onClick={handleDegen}
-          disabled={!isConnected || isSubmittingTransaction || isFlipping || isConnecting}
+          disabled={isSubmittingTransaction || isFlipping}
         >
-          {isConnecting
-            ? "Connecting Wallet..."
-            : isSubmittingTransaction
-            ? "Confirming..."
-            : isFlipping
-            ? "Flipping..."
-            : "Degen Flip!"}
+          {isSubmittingTransaction ? "Confirming..." : isFlipping ? "Flipping..." : "Degen Flip!"}
         </button>
       </div>
 

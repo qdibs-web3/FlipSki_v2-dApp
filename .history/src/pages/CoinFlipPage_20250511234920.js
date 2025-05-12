@@ -14,17 +14,17 @@ import {
   baseSepoliaChain,
 } from "../config";
 import CoinFlipETHABI from "../abis/CoinFlipETH.json";
-import coinImage from "../assets/flipski.gif";
-import headsImage from "../assets/flip.png";
-import tailsImage from "../assets/ski.png";
+import coinImage from "../assets/heads.png";
+import headsImage from "../assets/heads.png";
+import tailsImage from "../assets/tails.png";
 import "../styles/CoinFlipPage.css";
-import logo from "../assets/logo.png";
+import logo from "../assets/nav.png";
 
 const CoinFlipPage = () => {
   const {
     walletAddress,
     userRelatedError,
-    activeWalletInstance, // This is now the signer from useSigner()
+    // activeWalletInstance, // Signer from context, might not be directly needed for provider if window.ethereum is used
     isConnecting,
     isConnected,
   } = useWallet();
@@ -203,27 +203,18 @@ const CoinFlipPage = () => {
       const wagerInWei = parseEther(currentWagerForFlip);
       const choiceAsNumber = selectedSide === "heads" ? 0 : 1;
 
-      const contractCallParams = {
+      const flipTxHash = await walletClient.writeContract({
         address: COINFLIP_CONTRACT_ADDRESS,
         abi: CoinFlipETHABI.abi,
         functionName: "flip",
         args: [choiceAsNumber],
         value: wagerInWei,
-        account: walletClient.account,
-        gas: BigInt(300000), // Explicitly set a higher gas limit (e.g., 300,000)
-      };
-
-      console.log("CoinFlipPage: Attempting to call contract with params:", contractCallParams);
-
-      const flipTxHash = await walletClient.writeContract(contractCallParams);
-      
-      console.log("CoinFlipPage: Transaction hash received:", flipTxHash);
+        account: walletClient.account, 
+      });
 
       const receipt = await publicClient.waitForTransactionReceipt({
         hash: flipTxHash,
       });
-      
-      console.log("CoinFlipPage: Transaction receipt received:", receipt);
 
       setIsSubmittingTransaction(false);
       setIsFlipping(true); 
@@ -278,6 +269,8 @@ const CoinFlipPage = () => {
           wagered: wageredAmountDisplay,
           payout: payoutAmount,
         });
+        fetchEthBalance();
+        fetchGameHistory();
       } else {
         console.error("GameSettled event was NOT found or not correctly decoded for player:", walletAddress, "Full transaction receipt:", receipt, "All raw logs from receipt:", receipt.logs);
         setError("Could not determine game outcome. Please ensure your ABI (CoinFlipETH.json) is up-to-date. Check browser console for detailed logs.");
@@ -294,11 +287,6 @@ const CoinFlipPage = () => {
       }
     } finally {
       setIsFlipping(false);
-      // Fetch balance and history after animation is done (isFlipping is false)
-      if (walletAddress) { // Ensure walletAddress is still valid before fetching
-        fetchEthBalance();
-        fetchGameHistory();
-      }
     }
   };
 
@@ -310,7 +298,7 @@ return (
       {walletAddress && (
         <div className="wallet-info-active">
           <p>
-            Wallet : <span className="wallet-address">{walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}</span>
+            Connected: <span className="wallet-address">{walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}</span>
           </p>
           <p>
             Balance:{" "}
@@ -360,7 +348,7 @@ return (
             )}
           </div>
         ) : (
-          <div className="coin-placeholder">Make your wager and FLIPSKI!</div>
+          <div className="coin-placeholder">Make your coin flip bet!</div>
         )}
       </div>
 
@@ -372,13 +360,13 @@ return (
             className={selectedSide === "heads" ? "selected" : ""}
             onClick={() => setSelectedSide("heads")}
           >
-            FLIP
+            Heads
           </button>
           <button
             className={selectedSide === "tails" ? "selected" : ""}
             onClick={() => setSelectedSide("tails")}
           >
-            SKI
+            Tails
           </button>
         </div>
 

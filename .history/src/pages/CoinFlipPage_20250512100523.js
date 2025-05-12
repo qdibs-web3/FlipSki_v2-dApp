@@ -14,7 +14,7 @@ import {
   baseSepoliaChain,
 } from "../config";
 import CoinFlipETHABI from "../abis/CoinFlipETH.json";
-import coinImage from "../assets/flipski.gif";
+import coinImage from "../assets/heads.png";
 import headsImage from "../assets/flip.png";
 import tailsImage from "../assets/ski.png";
 import "../styles/CoinFlipPage.css";
@@ -278,6 +278,8 @@ const CoinFlipPage = () => {
           wagered: wageredAmountDisplay,
           payout: payoutAmount,
         });
+        fetchEthBalance();
+        fetchGameHistory();
       } else {
         console.error("GameSettled event was NOT found or not correctly decoded for player:", walletAddress, "Full transaction receipt:", receipt, "All raw logs from receipt:", receipt.logs);
         setError("Could not determine game outcome. Please ensure your ABI (CoinFlipETH.json) is up-to-date. Check browser console for detailed logs.");
@@ -294,11 +296,6 @@ const CoinFlipPage = () => {
       }
     } finally {
       setIsFlipping(false);
-      // Fetch balance and history after animation is done (isFlipping is false)
-      if (walletAddress) { // Ensure walletAddress is still valid before fetching
-        fetchEthBalance();
-        fetchGameHistory();
-      }
     }
   };
 
