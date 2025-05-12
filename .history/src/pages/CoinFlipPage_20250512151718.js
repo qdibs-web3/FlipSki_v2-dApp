@@ -245,8 +245,8 @@ const CoinFlipPage = () => {
 
   // Task 2: Implement Wager Preview Logic (Helper function for text)
   const getSelectedSideText = () => {
-    if (selectedSide === "heads") return "FLIP";
-    if (selectedSide === "tails") return "SKI";
+    if (selectedSide === "heads") return "Heads (FLIP)";
+    if (selectedSide === "tails") return "Tails (SKI)";
     return "";
   };
 

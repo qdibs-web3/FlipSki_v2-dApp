@@ -10,7 +10,7 @@
   background-size: 400% 400%;
   animation: matrixGradient 15s ease infinite;
   overflow-x: hidden;
-  padding-top: 2px; /* Increased padding */
+  padding-top: 40px; /* Increased padding */
   padding-bottom: 40px; /* Increased padding */
 }
 
@@ -462,7 +462,7 @@
 
   .coin-display-area {
     min-height: 220px; /* Adjusted for smaller screens */
-    margin-top: 70px;
+    margin-top: 15px;
     margin-bottom: 15px;
   }
   .coin-flipping-animation .coin-image,
@@ -508,9 +508,6 @@
     font-size: 13px;
     padding: 8px;
   }
-  .game-history ul {
-    max-height: 700px; /* Example max height for scroll */
-  }
   .coin-flipping-animation .coin-image,
   .flip-result-display .result-coin-image {
     width: 120px;
@@ -527,8 +524,8 @@
     padding: 2px 4px;      /* Adjusted padding */
     justify-items: left;
     position: absolute;
-    top: 4px;
-    right: 6px;
+    top: 20px;
+    right: 20px;
   }
   .wallet-info-active p {
     font-size: 12px;    /* Changed from 13px (inherited) */

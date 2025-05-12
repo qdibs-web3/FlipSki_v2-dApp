@@ -14,9 +14,9 @@ import {
   baseSepoliaChain,
 } from "../config";
 import CoinFlipETHABI from "../abis/CoinFlipETH.json";
-import coinImage from "../assets/flipski.gif";
-import headsImage from "../assets/flip.png";
-import tailsImage from "../assets/ski.png";
+import coinImage from "../assets/flipski.gif"; // This is the main flipping animation GIF
+import headsImage from "../assets/flip.png"; // Image for selected 'heads'
+import tailsImage from "../assets/ski.png"; // Image for selected 'tails'
 import "../styles/CoinFlipPage.css";
 import logo from "../assets/logo.png";
 
@@ -24,6 +24,7 @@ const CoinFlipPage = () => {
   const {
     walletAddress,
     userRelatedError,
+    // activeWalletInstance, // Not directly used, getWalletClient handles signer
     isConnecting,
     isConnected,
   } = useWallet();
@@ -37,7 +38,6 @@ const CoinFlipPage = () => {
   const [ethBalance, setEthBalance] = useState("0");
   const [gameHistory, setGameHistory] = useState([]);
   const presetWagers = ["0.001", "0.005", "0.01"];
-  const [showHistory, setShowHistory] = useState(false); // Task 1a: Game History Dropdown Logic
 
   const publicClient = createPublicClient({
     chain: baseSepoliaChain,
@@ -121,6 +121,7 @@ const CoinFlipPage = () => {
     }
   }, [walletAddress, fetchEthBalance]);
 
+  // Task 1: Delay Game History Update - Modified useEffect for interval fetch
   useEffect(() => {
     if (walletAddress) {
       const fetchAndUpdateHistory = () => {
@@ -128,7 +129,7 @@ const CoinFlipPage = () => {
           fetchGameHistory();
         }
       };
-      fetchAndUpdateHistory();
+      fetchAndUpdateHistory(); // Initial fetch if not in an active operation
       const interval = setInterval(fetchAndUpdateHistory, 30000);
       return () => clearInterval(interval);
     }
@@ -187,7 +188,7 @@ const CoinFlipPage = () => {
       setIsSubmittingTransaction(false);
       setIsFlipping(true);
 
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      await new Promise(resolve => setTimeout(resolve, 3000)); // Animation duration
 
       let gameSettledEventData = null;
       let gameSettledEventFound = false;
@@ -221,39 +222,25 @@ const CoinFlipPage = () => {
       setIsFlipping(false);
       if (walletAddress) {
         fetchEthBalance();
-        fetchGameHistory();
+        fetchGameHistory(); // This call updates history after the current game is fully processed
       }
     }
   };
 
-  // Task 2: Correct Potential Earnings Formula
+  // Task 3d: Calculate Potential Earnings
   const potentialEarningsValue = useMemo(() => {
     if (!wager || isNaN(parseFloat(wager)) || parseFloat(wager) <= 0) {
       return "0.00000";
     }
     const wagerFloat = parseFloat(wager);
-    const winnings = wagerFloat; // Winnings match the wager
-    const fee = winnings * 0.05; // 5% of winnings
-    const earnings = wagerFloat + winnings - fee;
+    const earnings = wagerFloat * 2.9; // Wager + (Wager*2) - (Wager*2*0.05)
     return earnings.toFixed(5);
   }, [wager]);
-
-  // Task 1a: Game History Dropdown Logic
-  const toggleHistory = () => {
-    setShowHistory(!showHistory);
-  };
-
-  // Task 2: Implement Wager Preview Logic (Helper function for text)
-  const getSelectedSideText = () => {
-    if (selectedSide === "heads") return "FLIP";
-    if (selectedSide === "tails") return "SKI";
-    return "";
-  };
 
   return (
     <div className="coinflip-container">
       <div className="coinflip-box">
-        <img src={logo} alt="GuntFlip ETH" className="page-title" />
+        <img src={logo} alt="flipski ETH" className="page-title" />
 
         {walletAddress && (
           <div className="wallet-info-active">
@@ -271,7 +258,7 @@ const CoinFlipPage = () => {
             </div>
           ) : flipResult ? (
             <div className="flip-result-display">
-              <img src={flipResult.side === "heads" ? headsImage : tailsImage} alt={flipResult.side} className="coin-image result-coin-image" />
+              <img src={flipResult.side === "heads" ? headsImage : tailsImage} alt={flipResult.side} className="coin-image" />
               {flipResult.outcome === "win" && <p className="win-message">You Won! Wagered: {flipResult.wagered} ETH, Payout: {flipResult.payout} ETH</p>}
               {flipResult.outcome === "loss" && <p className="loss-message">You Lost. Wagered: {flipResult.wagered} ETH</p>}
               {flipResult.outcome === "unknown" && <p className="unknown-message">Outcome Unknown. Wagered: {flipResult.wagered} ETH. Check console.</p>}
@@ -284,6 +271,7 @@ const CoinFlipPage = () => {
 
         {error && <p className="error-message">{error}</p>}
 
+        {/* Task 3a, 3b, 3c: Controls and Selected Coin Display Area */}
         <div className="controls-and-selection-display-area">
           <div className="coinflip-controls">
             <div className="side-selection">
@@ -304,23 +292,17 @@ const CoinFlipPage = () => {
           {selectedSide && (
             <div className="selected-coin-display">
               <img src={selectedSide === "heads" ? headsImage : tailsImage} alt={`${selectedSide} choice`} className="selected-choice-image" />
-              <p className="preview-wager">Wager: {getSelectedSideText()} for {wager} ETH</p>
-              <p className="potential-earnings">Potential win: {potentialEarningsValue} ETH</p>
+              {/* Task 3d: Display Potential Earnings */}
+              <p className="potential-earnings">Potential earnings: {potentialEarningsValue} ETH</p>
             </div>
           )}
         </div>
 
-        {/* Task 1b & 1c: Game History Dropdown UI & Logic */}
         <div className="game-history">
-          <button onClick={toggleHistory} className="game-history-toggle">
-            Last 10 Games {showHistory ? "	▲" : "	▼"}
-          </button>
-          {showHistory && gameHistory.length > 0 && (
+          <h3>Last 10 Games</h3>
+          {gameHistory.length > 0 ? (
             <ul>{gameHistory.map((game) => (<li key={game.gameId} className={game.won ? "win-history" : "loss-history"}>Game #{game.gameId}: Result: {game.result} — {game.won ? `✅ Won ${game.payout} ETH` : `❌ Loss (Payout: ${game.payout} ETH)`}</li>))}</ul>
-          )}
-          {showHistory && gameHistory.length === 0 && (
-            <p>No game history yet.</p>
-          )}
+          ) : (<p>No game history yet.</p>)}
         </div>
 
       </div>

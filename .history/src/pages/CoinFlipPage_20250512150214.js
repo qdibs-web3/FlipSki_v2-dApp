@@ -243,13 +243,6 @@ const CoinFlipPage = () => {
     setShowHistory(!showHistory);
   };
 
-  // Task 2: Implement Wager Preview Logic (Helper function for text)
-  const getSelectedSideText = () => {
-    if (selectedSide === "heads") return "FLIP";
-    if (selectedSide === "tails") return "SKI";
-    return "";
-  };
-
   return (
     <div className="coinflip-container">
       <div className="coinflip-box">
@@ -304,8 +297,8 @@ const CoinFlipPage = () => {
           {selectedSide && (
             <div className="selected-coin-display">
               <img src={selectedSide === "heads" ? headsImage : tailsImage} alt={`${selectedSide} choice`} className="selected-choice-image" />
-              <p className="preview-wager">Wager: {getSelectedSideText()} for {wager} ETH</p>
-              <p className="potential-earnings">Potential win: {potentialEarningsValue} ETH</p>
+              <p className="preview-wager">Wager Preview: {potentialEarningsValue} ETH</p>
+              <p className="potential-earnings">Potential earnings: {potentialEarningsValue} ETH</p>
             </div>
           )}
         </div>

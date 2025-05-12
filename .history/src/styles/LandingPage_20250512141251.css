@@ -21,7 +21,7 @@
 }
 
 .landing-image {
-  width: 350px; /* Slightly smaller */
+  width: 150px; /* Slightly smaller */
   height: auto;
   margin-bottom: 2rem;
   filter: drop-shadow(0 0 10px #39ff14); /* Green glow */
@@ -30,7 +30,7 @@
 .play-button {
   background-color: transparent;
   border: 1px solid #ffffff;
-  color: #ffffff;
+  color: #00ff41;
   padding: 1rem 2rem;
   font-size: 1.2rem;
   font-weight: bold;

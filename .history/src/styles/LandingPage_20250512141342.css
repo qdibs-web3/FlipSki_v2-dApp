@@ -21,7 +21,7 @@
 }
 
 .landing-image {
-  width: 350px; /* Slightly smaller */
+  width: 450px; /* Slightly smaller */
   height: auto;
   margin-bottom: 2rem;
   filter: drop-shadow(0 0 10px #39ff14); /* Green glow */
