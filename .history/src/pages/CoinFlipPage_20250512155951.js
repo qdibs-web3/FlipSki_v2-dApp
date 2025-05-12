@@ -143,7 +143,7 @@ const CoinFlipPage = () => {
       return;
     }
     if (!selectedSide) {
-      setError("Select FLIP (HEADS) or SKI (TAILS).");
+      setError("Select heads or tails.");
       setTimeout(() => setError(""), 3000);
       return;
     }

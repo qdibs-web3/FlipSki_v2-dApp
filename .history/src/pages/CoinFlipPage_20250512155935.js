@@ -36,7 +36,7 @@ const CoinFlipPage = () => {
   const [error, setError] = useState("");
   const [ethBalance, setEthBalance] = useState("0");
   const [gameHistory, setGameHistory] = useState([]);
-  const presetWagers = ["0.001", "0.005", "0.01"];
+  const presetWagers = ["0.001", "0.005", "0.0075", "0.01"];
   const [showHistory, setShowHistory] = useState(false); // Task 1a: Game History Dropdown Logic
 
   const publicClient = createPublicClient({
@@ -143,7 +143,7 @@ const CoinFlipPage = () => {
       return;
     }
     if (!selectedSide) {
-      setError("Select FLIP (HEADS) or SKI (TAILS).");
+      setError("Select heads or tails.");
       setTimeout(() => setError(""), 3000);
       return;
     }
