@@ -19,7 +19,7 @@ body {
   width: 100%;
   min-height: 100%; /* Ensure body fills html height */
   /* Default body styles from original index.css, App.css may override some */
-  background-color: #1eb3ee; /* Consistent with html and App.css */
+  background-color: #08dc74; /* Consistent with html and App.css */
   font-family: 'Courier New', Courier, monospace;
   color: #00ff41;
   line-height: 1.6;

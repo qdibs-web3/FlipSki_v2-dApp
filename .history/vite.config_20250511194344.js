@@ -23,5 +23,8 @@ export default defineConfig({
       },
     },
   },
+  server: {
+    allowedHosts: ["5174-izi3fcuiokieokavkker0-9ac2d749.manus.computer"],
+  },
 });
 

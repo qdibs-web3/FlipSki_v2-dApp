@@ -42,14 +42,14 @@ const CoinFlipPage = () => {
     if (!account || !account.connector) {
       console.error("Wallet account or connector not available from AGW.");
       setError(
-        "Wallet connector not available. Please ensure your Base wallet is connected and configured correctly."
+        "Wallet connector not available. Please ensure your AGW wallet is connected and configured correctly."
       );
       return null;
     }
     try {
       const provider = await account.connector.getProvider();
       if (!provider) {
-        console.error("Failed to get provider from Base connector.");
+        console.error("Failed to get provider from AGW connector.");
         setError("Failed to get provider from wallet connector.");
         return null;
       }
@@ -300,10 +300,9 @@ return (
         </button>
       )}
 
-      {userRelatedError && (
-        <p className="wallet-warning">Wallet Error: {userRelatedError.message}</p>
+      {walletError && (
+        <p className="wallet-warning">Wallet Error: {walletError.message}</p>
       )}
-
 
       <div className="coin-display-area">
         {isFlipping ? (

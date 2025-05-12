@@ -1,5 +1,6 @@
 // src/context/WalletProvider.js
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext } from "react";
+import React, { useState } from 'react';
 
 import {
   useConnect,

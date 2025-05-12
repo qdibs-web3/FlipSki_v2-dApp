@@ -1,6 +1,5 @@
 // src/context/WalletProvider.js
-import React, { createContext, useContext, useState } from "react";
-
+import React, { createContext, useContext } from "react";
 import {
   useConnect,
   useDisconnect,
@@ -27,20 +26,14 @@ export const WalletProvider = ({ children }) => {
   const { disconnect } = useDisconnect();
   const connectionStatus = useConnectionStatus();
   const { isLoading: userRelatedIsLoading, error: userRelatedError } = useUser();
-  const [isWalletLoading, setIsWalletLoading] = useState(false);
-
 
   const connectWallet = async () => {
-    setIsWalletLoading(true);
     try {
       await connect(metamaskWallet());
     } catch (err) {
       console.error("Error connecting wallet:", err);
-    } finally {
-      setIsWalletLoading(false);
     }
   };
-  
 
   const disconnectWallet = async () => {
     try {

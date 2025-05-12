@@ -30,7 +30,6 @@ const CoinFlipPage = () => {
   const [error, setError] = useState("");
   const [ethBalance, setEthBalance] = useState("0");
   const [gameHistory, setGameHistory] = useState([]);
-  const [isWalletLoading, setIsWalletLoading] = useState(false);
   const presetWagers = ["0.001", "0.005", "0.01"];
 
   const publicClient = createPublicClient({
@@ -42,14 +41,14 @@ const CoinFlipPage = () => {
     if (!account || !account.connector) {
       console.error("Wallet account or connector not available from AGW.");
       setError(
-        "Wallet connector not available. Please ensure your Base wallet is connected and configured correctly."
+        "Wallet connector not available. Please ensure your AGW wallet is connected and configured correctly."
       );
       return null;
     }
     try {
       const provider = await account.connector.getProvider();
       if (!provider) {
-        console.error("Failed to get provider from Base connector.");
+        console.error("Failed to get provider from AGW connector.");
         setError("Failed to get provider from wallet connector.");
         return null;
       }
@@ -292,7 +291,7 @@ return (
         </div>
       ) : (
         <button
-          onClick={connectWallet}
+          onClick={connect}
           disabled={isConnecting || isWalletLoading}
           className="connect-wallet-button"
         >
@@ -300,10 +299,9 @@ return (
         </button>
       )}
 
-      {userRelatedError && (
-        <p className="wallet-warning">Wallet Error: {userRelatedError.message}</p>
+      {walletError && (
+        <p className="wallet-warning">Wallet Error: {walletError.message}</p>
       )}
-
 
       <div className="coin-display-area">
         {isFlipping ? (

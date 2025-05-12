@@ -14,17 +14,17 @@ const root = ReactDOM.createRoot(document.getElementById('root'));
 
 root.render(
   <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <Router>
-        <ThirdwebProvider
-          activeChain={BaseSepoliaTestnet}
-          clientId={'7f8c19e1d729d08da2b1a29179a940aa'}
-        >
-          <WalletProvider>
+    <Router>
+      <ThirdwebProvider
+        activeChain={BaseSepoliaTestnet}
+        clientId={'7f8c19e1d729d08da2b1a29179a940aa'}
+      >
+        <WalletProvider>
+          <QueryClientProvider client={queryClient}>
             <App />
-          </WalletProvider>
-        </ThirdwebProvider>
-      </Router>
-    </QueryClientProvider>
+          </QueryClientProvider>
+        </WalletProvider>
+      </ThirdwebProvider>
+    </Router>
   </React.StrictMode>
 );

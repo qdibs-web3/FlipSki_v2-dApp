@@ -49,7 +49,7 @@ const CoinFlipPage = () => {
     try {
       const provider = await account.connector.getProvider();
       if (!provider) {
-        console.error("Failed to get provider from Base connector.");
+        console.error("Failed to get provider from AGW connector.");
         setError("Failed to get provider from wallet connector.");
         return null;
       }
