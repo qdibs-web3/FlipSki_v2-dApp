@@ -20,4 +20,4 @@ export const baseSepoliaChain = defineChain({
 });
 
 // Deployed contract address on Base Sepolia Testnet
-export const COINFLIP_CONTRACT_ADDRESS = "0xA1Cdb81346E8885324D9F2937D0962c0a1b0E9c0"; 
+export const COINFLIP_CONTRACT_ADDRESS = "0x01CE40BA4b295458dB7c6048115dB3a954f3E209"; 
