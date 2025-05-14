@@ -314,7 +314,7 @@ const CoinFlipPage = () => {
   let buttonText = "Degen Flip!";
   if (isConnecting) buttonText = "Connecting Wallet...";
   else if (isSubmittingTransaction) buttonText = "Confirming Request...";
-  else if (isFlipping) buttonText = "Flipping...Waiting on VRF";
+  else if (isFlipping) buttonText = "Flipping...";
 
   return (
     <div className="coinflip-container">
@@ -367,16 +367,12 @@ const CoinFlipPage = () => {
             </button>
           </div>
 
-          <div className="selected-coin-display">
-            {selectedSide && (
+          {selectedSide && !isFlipping && !flipResult && (
+            <div className="selected-coin-display">
               <img src={selectedSide === "heads" ? headsImage : tailsImage} alt={`${selectedSide} choice`} className="selected-choice-image" />
-            )}
-            {!selectedSide && !isFlipping && !flipResult && (
-                 <div className="selected-choice-placeholder-text">Select: FLIP (H) or SKI (T)</div>
-            )}
-            <p className="preview-wager">Wager: {getSelectedSideText()} for {wager} ETH</p>
-            <p className="potential-earnings">Potential Payout: {potentialEarningsValue} ETH</p>
-          </div>
+              <p className="potential-earnings">Potential Payout: {potentialEarningsValue} ETH</p>
+            </div>
+          )}
         </div>
 
         {/* User's requested JSX for game history with VRF link and corrected logic */}

@@ -21,7 +21,6 @@
   max-height: 60px;
   cursor: pointer;
   transition: transform 0.2s ease;
-  filter: drop-shadow(0 0 10px #39ff14); /* Green glow */
 }
 
 .logo:hover {

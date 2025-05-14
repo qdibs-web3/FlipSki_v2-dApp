@@ -112,7 +112,7 @@
 }
 
 .coinflip-box {
-  background-color: #012d53;
+  background-color: #0a599c;
   border: 1px solid #007bff;
   border-radius: 10px;
   padding: 2rem;
@@ -125,11 +125,6 @@
   box-shadow: 0 0 100px rgba(255, 255, 255, 0.7);
   position: relative;
   margin-top: 40px;
-}
-
-.selected-choice-placeholder-text {
-  font-size: 16px;
-  color: red;
 }
 
 .wallet-address {
@@ -353,8 +348,8 @@
 
 .wallet-info-active p {
   font-size: 14px;
-  font-weight: bolder;
-  margin: 2px 0;
+  font-weight: normal;
+  margin: 5px 0;
 }
 
 .wallet-info-active .wallet-address,

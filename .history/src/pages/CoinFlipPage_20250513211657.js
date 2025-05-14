@@ -13,7 +13,7 @@ import {
   COINFLIP_CONTRACT_ADDRESS,
   baseSepoliaChain,
 } from "../config";
-import FlipSkiBaseVRFABI from "../abis/FlipSkiBaseVRF.abi.json"; 
+import FlipSkiBaseVRFABI from "../abis/FlipSkiBaseVRF.abi.json";
 import coinImage from "../assets/flipski.gif";
 import headsImage from "../assets/flip.png";
 import tailsImage from "../assets/ski.png";
@@ -30,15 +30,15 @@ const CoinFlipPage = () => {
 
   const [selectedSide, setSelectedSide] = useState(null);
   const [wager, setWager] = useState("0.001");
-  const [isFlipping, setIsFlipping] = useState(false); 
-  const [isSubmittingTransaction, setIsSubmittingTransaction] = useState(false); 
-  const [flipResult, setFlipResult] = useState(null); 
+  const [isFlipping, setIsFlipping] = useState(false); // True while awaiting VRF fulfillment
+  const [isSubmittingTransaction, setIsSubmittingTransaction] = useState(false); // True while flip request tx is being confirmed
+  const [flipResult, setFlipResult] = useState(null); // Stores the outcome for the main display
   const [error, setError] = useState("");
   const [ethBalance, setEthBalance] = useState("0");
   const [gameHistory, setGameHistory] = useState([]);
   const presetWagers = ["0.001", "0.005", "0.01"];
   const [showHistory, setShowHistory] = useState(false);
-  const [currentFlipAttempt, setCurrentFlipAttempt] = useState(null); 
+  const [activeFlipDetails, setActiveFlipDetails] = useState(null); // Stores { gameId, wagerInEth, choice } for the ongoing flip
 
   const publicClient = createPublicClient({
     chain: baseSepoliaChain,
@@ -76,61 +76,45 @@ const CoinFlipPage = () => {
         setEthBalance(formatEther(balance));
       } catch (err) {
         console.error("Error fetching ETH balance:", err);
+        // setError("Could not fetch ETH balance."); // Avoid overriding more important errors
       }
     }
   }, [walletAddress, publicClient]);
 
   const fetchGameHistory = useCallback(async () => {
     if (!publicClient || !walletAddress) return;
-    // console.log("HISTORY_DEBUG: Starting fetchGameHistory"); // Keep or remove debug logs as needed
     try {
       const gameSettledEventAbi = FlipSkiBaseVRFABI.abi.find(
         (item) => item.name === "GameSettled" && item.type === "event"
       );
       if (!gameSettledEventAbi) {
-        console.error("HISTORY_DEBUG: GameSettled event ABI not found.");
+        console.error("GameSettled event ABI not found in provided JSON.");
         return;
       }
       const logs = await publicClient.getLogs({
         address: COINFLIP_CONTRACT_ADDRESS,
         event: gameSettledEventAbi,
         args: { player: walletAddress },
-        fromBlock: "earliest",
+        fromBlock: "earliest", 
         toBlock: "latest",
       });
-      // console.log(`HISTORY_DEBUG: Found ${logs.length} GameSettled logs for player.`);
-
       const history = logs
-        .filter(log => {
-            const isValid = log.args && log.args.gameId !== undefined && log.args.result !== undefined && log.args.payoutAmount !== undefined && log.transactionHash;
-            // if (!isValid) {
-            //     console.log("HISTORY_DEBUG: Filtering out invalid log:", log);
-            // }
-            return isValid;
-        })
-        .map((log, index) => {
-          // console.log(`HISTORY_DEBUG: Processing log index ${index}:`, log); // Keep or remove debug logs
-          const rawResult = log.args.result; 
-          // CRITICAL FIX: Ensure correct comparison for Heads/Tails mapping
-          const mappedResult = Number(rawResult) === 0 ? "Heads" : "Tails";
-          const payoutAmount = log.args.payoutAmount;
-          const won = payoutAmount > 0n;
-          // console.log(`HISTORY_DEBUG: Log ${index} - GameID: ${log.args.gameId.toString()}, Raw Result (type ${typeof rawResult}): ${rawResult}, Mapped Result: ${mappedResult}, Payout: ${formatEther(payoutAmount)}, Won: ${won}`);
-          
+        .filter(log => log.args && log.args.hasOwnProperty("gameId") && log.args.hasOwnProperty("result") && log.args.hasOwnProperty("payoutAmount") && log.transactionHash)
+        .map((log) => {
+          const payout = formatEther(log.args.payoutAmount);
           return {
             gameId: log.args.gameId.toString(),
-            result: mappedResult, 
-            payout: formatEther(payoutAmount),
-            won: won,
-            fulfillmentTxHash: log.transactionHash, // Ensure this is passed for the link
-            vrfRequestId: log.args.vrfRequestId ? log.args.vrfRequestId.toString() : null, // Keep if needed
+            result: log.args.result === 0n ? "Heads" : "Tails", 
+            payout: payout,
+            won: log.args.payoutAmount > 0n,
+            fulfillmentTxHash: log.transactionHash,
+            vrfRequestId: log.args.vrfRequestId ? log.args.vrfRequestId.toString() : null 
           };
         })
-        .reverse();
-      setGameHistory(history.slice(0, 10));
-      // console.log("HISTORY_DEBUG: Finished processing game history. History items set:", history.slice(0,10).length);
+        .reverse(); 
+      setGameHistory(history.slice(0, 10)); 
     } catch (err) {
-      console.error("HISTORY_DEBUG: Error fetching game history:", err);
+      console.error("Error fetching game history:", err);
     }
   }, [publicClient, walletAddress]);
 
@@ -143,62 +127,48 @@ const CoinFlipPage = () => {
   useEffect(() => {
     if (walletAddress) {
       const fetchAndUpdateHistory = () => {
-        if (!isSubmittingTransaction) {
+        if (!isSubmittingTransaction) { 
           fetchGameHistory();
         }
       };
-      fetchAndUpdateHistory();
-      const interval = setInterval(fetchAndUpdateHistory, 15000);
+      fetchAndUpdateHistory(); 
+      const interval = setInterval(fetchAndUpdateHistory, 15000); 
       return () => clearInterval(interval);
     }
   }, [walletAddress, fetchGameHistory, isSubmittingTransaction]);
 
+  // Effect to update main display when game history fetches the result for an active flip
   useEffect(() => {
-    if (currentFlipAttempt && currentFlipAttempt.gameId && gameHistory.length > 0) {
-      const settledGame = gameHistory.find(game => game.gameId === currentFlipAttempt.gameId);
+    if (activeFlipDetails && activeFlipDetails.gameId && gameHistory.length > 0) {
+      const settledGame = gameHistory.find(game => game.gameId === activeFlipDetails.gameId);
       if (settledGame) {
-        // console.log("MAIN_DISPLAY_DEBUG: Found settled game for current flip attempt:", settledGame);
         const gameResultOutcome = settledGame.won ? "win" : "loss";
-        const actualSide = settledGame.result.toLowerCase(); 
-        // console.log(`MAIN_DISPLAY_DEBUG: Setting flipResult - Outcome: ${gameResultOutcome}, Side: ${actualSide}, Wager: ${currentFlipAttempt.wagerInEth}, Payout: ${settledGame.payout}`);
+        const actualSide = settledGame.result.toLowerCase();
+
         setFlipResult({
           outcome: gameResultOutcome,
           side: actualSide,
-          wagered: currentFlipAttempt.wagerInEth,
+          wagered: activeFlipDetails.wagerInEth, 
           payout: settledGame.payout,
         });
-        setIsFlipping(false);
-        setCurrentFlipAttempt(null);
-        setError("");
+        setIsFlipping(false); // Stop spinner, result is in
+        setActiveFlipDetails(null); // Clear active flip details
       }
     }
-  }, [gameHistory, currentFlipAttempt]);
-
-  useEffect(() => {
-    let timeoutId;
-    if (isFlipping && currentFlipAttempt) {
-      timeoutId = setTimeout(() => {
-        if (isFlipping) {
-          // console.log("MAIN_DISPLAY_DEBUG: Timeout reached for VRF fulfillment.");
-          setError("VRF result is taking a while. Check game history for updates.");
-          setFlipResult({ outcome: "unknown", side: "unknown", wagered: currentFlipAttempt.wagerInEth, payout: "0" });
-          setIsFlipping(false);
-          setCurrentFlipAttempt(null);
-        }
-      }, 90000);
-    }
-    return () => clearTimeout(timeoutId);
-  }, [isFlipping, currentFlipAttempt]);
+  }, [gameHistory, activeFlipDetails]);
 
   const handleDegen = async () => {
     setError("");
-    setFlipResult(null);
+    setFlipResult(null); // Clear previous main display result before new flip
+
     if (!isConnected) {
-      setError("Connect wallet first.");
+      setError("Connect wallet first (from the navigation bar). Ensure it is fully connected.");
+      setTimeout(() => setError(""), 4000);
       return;
     }
     if (!selectedSide) {
       setError("Select FLIP (HEADS) or SKI (TAILS).");
+      setTimeout(() => setError(""), 3000);
       return;
     }
     let minWagerEth, maxWagerEth;
@@ -207,23 +177,25 @@ const CoinFlipPage = () => {
       maxWagerEth = formatEther(await publicClient.readContract({ address: COINFLIP_CONTRACT_ADDRESS, abi: FlipSkiBaseVRFABI.abi, functionName: "maxWager" }));
     } catch (e) {
       console.error("Could not fetch wager limits", e);
-      setError("Wager limits unavailable. Using defaults.");
-      minWagerEth = "0.001";
-      maxWagerEth = "0.1";
+      setError("Could not fetch wager limits. Using defaults.");
+      setTimeout(() => setError(""), 3000);
+      minWagerEth = "0.001"; 
+      maxWagerEth = "0.1";   
     }
     if (!wager || parseFloat(wager) < parseFloat(minWagerEth) || parseFloat(wager) > parseFloat(maxWagerEth)) {
-      setError(`Wager must be between ${minWagerEth} and ${maxWagerEth} ETH.`);
+      setError(`Enter a valid wager between ${minWagerEth} and ${maxWagerEth} ETH.`);
+      setTimeout(() => setError(""), 3000);
       return;
     }
     const walletClient = await getWalletClient();
     if (!walletClient) return;
 
     setIsSubmittingTransaction(true);
-    const currentWagerForFlipEth = wager;
-    const choiceAsNumber = selectedSide === "heads" ? 0 : 1; 
+    const currentWagerForFlip = wager; // Keep a copy for this attempt
+    const choiceAsNumber = selectedSide === "heads" ? 0 : 1;
 
     try {
-      const wagerInWei = parseEther(currentWagerForFlipEth);
+      const wagerInWei = parseEther(currentWagerForFlip);
       const contractCallParams = {
         address: COINFLIP_CONTRACT_ADDRESS,
         abi: FlipSkiBaseVRFABI.abi,
@@ -233,88 +205,75 @@ const CoinFlipPage = () => {
         account: walletClient.account,
       };
       const flipTxHash = await walletClient.writeContract(contractCallParams);
-      // console.log("REQUEST_DEBUG: Flip request transaction sent:", flipTxHash);
+      console.log("Flip request transaction sent:", flipTxHash);
       const requestReceipt = await publicClient.waitForTransactionReceipt({ hash: flipTxHash });
-      // console.log("REQUEST_DEBUG: Flip request receipt received:", requestReceipt);
-      setIsSubmittingTransaction(false);
+      setIsSubmittingTransaction(false); // Flip request transaction confirmed
 
       let parsedGameRequested = null;
       const gameRequestedEventAbi = FlipSkiBaseVRFABI.abi.find(
         (item) => item.name === "GameRequested" && item.type === "event"
       );
-      
-      // Removed debug logs for brevity, can be re-added if needed
-      for (const i in requestReceipt.logs) {
-        const log = requestReceipt.logs[i];
-        if (log.address.toLowerCase() !== COINFLIP_CONTRACT_ADDRESS.toLowerCase()) {
-            continue;
-        }
-        try {
-          const decodedLog = decodeEventLog({ abi: FlipSkiBaseVRFABI.abi, data: log.data, topics: log.topics });
-          if (decodedLog && decodedLog.eventName === "GameRequested") {
-            if (decodedLog.args && 
-                decodedLog.args.player && 
-                decodedLog.args.gameId !== undefined && 
-                decodedLog.args.wagerAmount !== undefined && 
-                decodedLog.args.choice !== undefined) {
-              if (decodedLog.args.player.toLowerCase() === walletAddress.toLowerCase()) {
-                parsedGameRequested = {
-                  gameId: decodedLog.args.gameId.toString(),
-                  wagerInEth: formatEther(decodedLog.args.wagerAmount),
-                  choiceAsNumber: Number(decodedLog.args.choice),
-                };
-                break; 
-              }
+
+      if (gameRequestedEventAbi) {
+        for (const log of requestReceipt.logs) {
+          try {
+            const decodedLog = decodeEventLog({ abi: FlipSkiBaseVRFABI.abi, data: log.data, topics: log.topics });
+            if (decodedLog && decodedLog.eventName === "GameRequested" && decodedLog.args.player && decodedLog.args.player.toLowerCase() === walletAddress.toLowerCase()) {
+              parsedGameRequested = {
+                gameId: decodedLog.args.gameId.toString(),
+                wagerInEth: formatEther(decodedLog.args.wager), 
+                choice: Number(decodedLog.args.choice) 
+              };
+              break;
             }
-          }
-        } catch (e) {
-          // console.error(`REQUEST_DEBUG: Error decoding log at index ${i} (from our contract):`, e, "Log data:", log);
+          } catch (e) { /* ignore other events or decoding errors */ }
         }
       }
 
       if (parsedGameRequested) {
-        setCurrentFlipAttempt(parsedGameRequested);
-        setIsFlipping(true);
-        setError("");
+        setActiveFlipDetails(parsedGameRequested);
+        setIsFlipping(true); // Start spinner and "Awaiting VRF" state
+        // setError(""); // Clear general errors, spinner has its own message
       } else {
-        setError("Flip sent. Result will appear in history. Could not link for main display.");
-        setFlipResult({ outcome: "unknown", side: "unknown", wagered: currentWagerForFlipEth, payout: "0" });
+        console.error("Could not parse GameRequested event from transaction receipt:", requestReceipt);
+        setError("Flip initiated, but could not confirm game details. Check history or console.");
       }
-
+      
     } catch (err) {
-      console.error("Error during flip transaction:", err);
-      setError(err.shortMessage || err.message || "Flip transaction failed.");
-      setFlipResult({ outcome: "error", side: "unknown", wagered: currentWagerForFlipEth, payout: "0" });
-      setIsSubmittingTransaction(false);
+      console.error("Error during flip transaction or processing:", err);
+      setError(err.shortMessage || err.message || "An error occurred during the flip.");
+      setIsSubmittingTransaction(false); // Ensure this is reset on error too
+      // setFlipResult({ outcome: "error", side: "unknown", wagered: currentWagerForFlip, payout: "0" }); // Optionally show error in main display
     } finally {
+      // Note: setIsSubmittingTransaction is handled within the try/catch now.
+      // setIsFlipping will be set to false by the useEffect when result arrives.
       if (walletAddress) {
-        fetchEthBalance();
+        fetchEthBalance(); 
       }
     }
   };
 
   const potentialEarningsValue = useMemo(() => {
-    if (!wager || isNaN(parseFloat(wager)) || parseFloat(wager) <= 0) return "0.00000";
+    if (!wager || isNaN(parseFloat(wager)) || parseFloat(wager) <= 0) {
+      return "0.00000";
+    }
     const wagerFloat = parseFloat(wager);
-    const feePercentage = 0.05;
+    const feePercentage = 0.05; // 5%
     const feeAmount = wagerFloat * feePercentage;
     const grossPayout = wagerFloat * 2;
     const netPayoutIfWin = grossPayout - feeAmount;
     return netPayoutIfWin.toFixed(5);
   }, [wager]);
 
-  const toggleHistory = () => setShowHistory(!showHistory);
+  const toggleHistory = () => {
+    setShowHistory(!showHistory);
+  };
 
   const getSelectedSideText = () => {
     if (selectedSide === "heads") return "FLIP";
     if (selectedSide === "tails") return "SKI";
     return "";
   };
-
-  let buttonText = "Degen Flip!";
-  if (isConnecting) buttonText = "Connecting Wallet...";
-  else if (isSubmittingTransaction) buttonText = "Confirming Request...";
-  else if (isFlipping) buttonText = "Flipping...Waiting on VRF";
 
   return (
     <div className="coinflip-container">
@@ -334,14 +293,14 @@ const CoinFlipPage = () => {
           {isFlipping ? (
             <div className="coin-flipping-animation">
               <img src={coinImage} alt="Flipping Coin" className="coin-image" />
+              <p>Waiting for VRF fulfillment...</p>
             </div>
           ) : flipResult ? (
             <div className="flip-result-display">
               <img src={flipResult.side === "heads" ? headsImage : tailsImage} alt={flipResult.side} className="coin-image result-coin-image" />
               {flipResult.outcome === "win" && <p className="win-message">You Won! Wagered: {flipResult.wagered} ETH, Payout: {flipResult.payout} ETH</p>}
               {flipResult.outcome === "loss" && <p className="loss-message">You Lost. Wagered: {flipResult.wagered} ETH</p>}
-              {flipResult.outcome === "unknown" && <p className="unknown-message">Outcome Unknown. Wagered: {flipResult.wagered} ETH. Check console.</p>}
-              {flipResult.outcome === "error" && <p className="error-message-result">Flip Error. Wagered: {flipResult.wagered} ETH. Check console.</p>}
+              {/* Removed unknown/error from main display as history is primary for that now, or keep if desired */}
             </div>
           ) : (
             <div className="coin-placeholder">Make your wager and FLIPSKI!</div>
@@ -363,26 +322,22 @@ const CoinFlipPage = () => {
               </div>
             </div>
             <button className="degen-button" onClick={handleDegen} disabled={!isConnected || isSubmittingTransaction || isFlipping || isConnecting}>
-              {buttonText}
+              {isConnecting ? "Connecting Wallet..." : isSubmittingTransaction ? "Confirming Request..." : isFlipping ? "Awaiting VRF..." : "Degen Flip!"}
             </button>
           </div>
 
-          <div className="selected-coin-display">
-            {selectedSide && (
+          {selectedSide && !isFlipping && !flipResult && (
+            <div className="selected-coin-display">
               <img src={selectedSide === "heads" ? headsImage : tailsImage} alt={`${selectedSide} choice`} className="selected-choice-image" />
-            )}
-            {!selectedSide && !isFlipping && !flipResult && (
-                 <div className="selected-choice-placeholder-text">Select: FLIP (H) or SKI (T)</div>
-            )}
-            <p className="preview-wager">Wager: {getSelectedSideText()} for {wager} ETH</p>
-            <p className="potential-earnings">Potential Payout: {potentialEarningsValue} ETH</p>
-          </div>
+              <p className="preview-wager">Wager: {getSelectedSideText()} for {wager} ETH</p>
+              <p className="potential-earnings">Potential win (after fee): {potentialEarningsValue} ETH</p>
+            </div>
+          )}
         </div>
 
-        {/* User's requested JSX for game history with VRF link and corrected logic */}
         <div className="game-history">
           <button onClick={toggleHistory} className="game-history-toggle">
-            Last 10 FLIPSKI Wagers {showHistory ? "\u25B2" : "\u25BC"} {/* Unicode for up/down triangles */}
+            Last 10 FLIPSKI Wagers {showHistory ? "	▲" : "	▼"}
           </button>
           {showHistory && gameHistory.length > 0 && (
             <ul>
@@ -390,7 +345,7 @@ const CoinFlipPage = () => {
                 <li key={game.gameId} className={game.won ? "win-history" : "loss-history"}>
                   Game #{game.gameId}: Result: {game.result} — {game.won ? `✅ Won ${game.payout} ETH` : `❌ Loss (Payout: ${game.payout} ETH)`}
                   {game.fulfillmentTxHash && (
-                    <a href={`https://sepolia.basescan.org/tx/${game.fulfillmentTxHash}`} target="_blank" rel="noopener noreferrer" className="history-tx-link">
+                    <a href={`https://sepolia.basescan.org/tx/${game.fulfillmentTxHash}`} target="_blank" rel="noopener noreferrer" style={{ marginLeft: '10px', color: '#88aaff' }}>
                       (View VRF Tx)
                     </a>
                   )}

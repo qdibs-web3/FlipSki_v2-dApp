@@ -6,7 +6,7 @@
   padding: 0.5rem 1.5rem;
   border-bottom: 1px solid #ffffff;
   min-height: 40px;
-  background: linear-gradient(170deg, #fff, #0a599c, #0a599c);
+  background-color: #0a599c;
   background-size: 600% 600%;
   animation: animatedBackground 10s ease infinite;
 }
@@ -21,7 +21,6 @@
   max-height: 60px;
   cursor: pointer;
   transition: transform 0.2s ease;
-  filter: drop-shadow(0 0 10px #39ff14); /* Green glow */
 }
 
 .logo:hover {

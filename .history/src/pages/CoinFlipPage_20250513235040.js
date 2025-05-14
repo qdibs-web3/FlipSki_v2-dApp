@@ -82,7 +82,7 @@ const CoinFlipPage = () => {
 
   const fetchGameHistory = useCallback(async () => {
     if (!publicClient || !walletAddress) return;
-    // console.log("HISTORY_DEBUG: Starting fetchGameHistory"); // Keep or remove debug logs as needed
+    // console.log("HISTORY_DEBUG: Starting fetchGameHistory"); // Debug logging can be removed or kept as needed
     try {
       const gameSettledEventAbi = FlipSkiBaseVRFABI.abi.find(
         (item) => item.name === "GameSettled" && item.type === "event"
@@ -109,10 +109,9 @@ const CoinFlipPage = () => {
             return isValid;
         })
         .map((log, index) => {
-          // console.log(`HISTORY_DEBUG: Processing log index ${index}:`, log); // Keep or remove debug logs
-          const rawResult = log.args.result; 
-          // CRITICAL FIX: Ensure correct comparison for Heads/Tails mapping
-          const mappedResult = Number(rawResult) === 0 ? "Heads" : "Tails";
+          // console.log(`HISTORY_DEBUG: Processing log index ${index}:`, log);
+          const rawResult = log.args.result;
+          const mappedResult = Number(rawResult) === 0 ? "Heads" : "Tails"; // Corrected comparison
           const payoutAmount = log.args.payoutAmount;
           const won = payoutAmount > 0n;
           // console.log(`HISTORY_DEBUG: Log ${index} - GameID: ${log.args.gameId.toString()}, Raw Result (type ${typeof rawResult}): ${rawResult}, Mapped Result: ${mappedResult}, Payout: ${formatEther(payoutAmount)}, Won: ${won}`);
@@ -122,8 +121,8 @@ const CoinFlipPage = () => {
             result: mappedResult, 
             payout: formatEther(payoutAmount),
             won: won,
-            fulfillmentTxHash: log.transactionHash, // Ensure this is passed for the link
-            vrfRequestId: log.args.vrfRequestId ? log.args.vrfRequestId.toString() : null, // Keep if needed
+            fulfillmentTxHash: log.transactionHash, // Keep fulfillmentTxHash if needed for other purposes or future JSX
+            vrfRequestId: log.args.vrfRequestId ? log.args.vrfRequestId.toString() : null,
           };
         })
         .reverse();
@@ -243,29 +242,53 @@ const CoinFlipPage = () => {
         (item) => item.name === "GameRequested" && item.type === "event"
       );
       
-      // Removed debug logs for brevity, can be re-added if needed
+      // if (!gameRequestedEventAbi) {
+      //   console.error("REQUEST_DEBUG: GameRequested event ABI definition not found!");
+      // } else {
+      //   console.log("REQUEST_DEBUG: GameRequested event ABI definition found.");
+      // }
+
+      // console.log("REQUEST_DEBUG: Iterating through receipt logs. Total logs:", requestReceipt.logs.length);
       for (const i in requestReceipt.logs) {
         const log = requestReceipt.logs[i];
+        // console.log(`REQUEST_DEBUG: Processing log index ${i}:`, log);
+        
         if (log.address.toLowerCase() !== COINFLIP_CONTRACT_ADDRESS.toLowerCase()) {
+            // console.log(`REQUEST_DEBUG: Log at index ${i} is from a different contract (${log.address}). Skipping.`);
             continue;
         }
+
         try {
           const decodedLog = decodeEventLog({ abi: FlipSkiBaseVRFABI.abi, data: log.data, topics: log.topics });
+          // console.log(`REQUEST_DEBUG: Decoded log index ${i} (from our contract):`, decodedLog);
+          // console.log(`REQUEST_DEBUG: Decoded log ARGS at index ${i}:`, decodedLog.args);
+
           if (decodedLog && decodedLog.eventName === "GameRequested") {
+            // console.log(`REQUEST_DEBUG: GameRequested event found at index ${i}. Args:`, decodedLog.args);
             if (decodedLog.args && 
                 decodedLog.args.player && 
                 decodedLog.args.gameId !== undefined && 
                 decodedLog.args.wagerAmount !== undefined && 
                 decodedLog.args.choice !== undefined) {
+
               if (decodedLog.args.player.toLowerCase() === walletAddress.toLowerCase()) {
+                // console.log(`REQUEST_DEBUG: Player address matches for GameRequested event at index ${i}.`);
                 parsedGameRequested = {
                   gameId: decodedLog.args.gameId.toString(),
                   wagerInEth: formatEther(decodedLog.args.wagerAmount),
                   choiceAsNumber: Number(decodedLog.args.choice),
                 };
                 break; 
+              // } else {
+              //   console.log(`REQUEST_DEBUG: Player address mismatch for GameRequested event at index ${i}. Expected: ${walletAddress}, Got: ${decodedLog.args.player}`);
               }
+            // } else {
+            //     console.error(`REQUEST_DEBUG: GameRequested event at index ${i} is missing expected arguments. Args received:`, decodedLog.args);
             }
+          // } else if (decodedLog) {
+          //   console.log(`REQUEST_DEBUG: Decoded log at index ${i} is not GameRequested. Event name: ${decodedLog.eventName}`);
+          // } else {
+          //   console.log(`REQUEST_DEBUG: Could not decode log at index ${i} (from our contract).`);
           }
         } catch (e) {
           // console.error(`REQUEST_DEBUG: Error decoding log at index ${i} (from our contract):`, e, "Log data:", log);
@@ -273,10 +296,12 @@ const CoinFlipPage = () => {
       }
 
       if (parsedGameRequested) {
+        // console.log("REQUEST_DEBUG: GameRequested event successfully parsed:", parsedGameRequested);
         setCurrentFlipAttempt(parsedGameRequested);
         setIsFlipping(true);
         setError("");
       } else {
+        // console.error("REQUEST_DEBUG: Could not parse GameRequested event from receipt after iterating all logs.", requestReceipt);
         setError("Flip sent. Result will appear in history. Could not link for main display.");
         setFlipResult({ outcome: "unknown", side: "unknown", wagered: currentWagerForFlipEth, payout: "0" });
       }
@@ -314,7 +339,7 @@ const CoinFlipPage = () => {
   let buttonText = "Degen Flip!";
   if (isConnecting) buttonText = "Connecting Wallet...";
   else if (isSubmittingTransaction) buttonText = "Confirming Request...";
-  else if (isFlipping) buttonText = "Flipping...Waiting on VRF";
+  else if (isFlipping) buttonText = "Flipping...";
 
   return (
     <div className="coinflip-container">
@@ -367,19 +392,15 @@ const CoinFlipPage = () => {
             </button>
           </div>
 
-          <div className="selected-coin-display">
-            {selectedSide && (
+          {selectedSide && !isFlipping && !flipResult && (
+            <div className="selected-coin-display">
               <img src={selectedSide === "heads" ? headsImage : tailsImage} alt={`${selectedSide} choice`} className="selected-choice-image" />
-            )}
-            {!selectedSide && !isFlipping && !flipResult && (
-                 <div className="selected-choice-placeholder-text">Select: FLIP (H) or SKI (T)</div>
-            )}
-            <p className="preview-wager">Wager: {getSelectedSideText()} for {wager} ETH</p>
-            <p className="potential-earnings">Potential Payout: {potentialEarningsValue} ETH</p>
-          </div>
+              <p className="potential-earnings">Potential Payout: {potentialEarningsValue} ETH</p>
+            </div>
+          )}
         </div>
 
-        {/* User's requested JSX for game history with VRF link and corrected logic */}
+        {/* User's requested JSX for game history */}
         <div className="game-history">
           <button onClick={toggleHistory} className="game-history-toggle">
             Last 10 FLIPSKI Wagers {showHistory ? "\u25B2" : "\u25BC"} {/* Unicode for up/down triangles */}
@@ -389,11 +410,6 @@ const CoinFlipPage = () => {
               {gameHistory.map((game) => (
                 <li key={game.gameId} className={game.won ? "win-history" : "loss-history"}>
                   Game #{game.gameId}: Result: {game.result} — {game.won ? `✅ Won ${game.payout} ETH` : `❌ Loss (Payout: ${game.payout} ETH)`}
-                  {game.fulfillmentTxHash && (
-                    <a href={`https://sepolia.basescan.org/tx/${game.fulfillmentTxHash}`} target="_blank" rel="noopener noreferrer" className="history-tx-link">
-                      (View VRF Tx)
-                    </a>
-                  )}
                 </li>
               ))}
             </ul>

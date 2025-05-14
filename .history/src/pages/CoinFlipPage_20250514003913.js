@@ -314,7 +314,7 @@ const CoinFlipPage = () => {
   let buttonText = "Degen Flip!";
   if (isConnecting) buttonText = "Connecting Wallet...";
   else if (isSubmittingTransaction) buttonText = "Confirming Request...";
-  else if (isFlipping) buttonText = "Flipping...Waiting on VRF";
+  else if (isFlipping) buttonText = "Flipping...";
 
   return (
     <div className="coinflip-container">

@@ -127,11 +127,6 @@
   margin-top: 40px;
 }
 
-.selected-choice-placeholder-text {
-  font-size: 16px;
-  color: red;
-}
-
 .wallet-address {
   font-weight: bold;
   background-color: rgba(0, 0, 0, 0.3);
@@ -353,8 +348,8 @@
 
 .wallet-info-active p {
   font-size: 14px;
-  font-weight: bolder;
-  margin: 2px 0;
+  font-weight: normal;
+  margin: 5px 0;
 }
 
 .wallet-info-active .wallet-address,

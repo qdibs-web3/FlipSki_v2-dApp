@@ -353,8 +353,8 @@
 
 .wallet-info-active p {
   font-size: 14px;
-  font-weight: bolder;
-  margin: 2px 0;
+  font-weight: bold;
+  margin: 5px 0;
 }
 
 .wallet-info-active .wallet-address,
