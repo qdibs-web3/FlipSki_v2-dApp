@@ -36,7 +36,7 @@ const CoinFlipPage = () => {
   const [error, setError] = useState("");
   const [ethBalance, setEthBalance] = useState("0");
   const [gameHistory, setGameHistory] = useState([]);
-  const presetWagers = ["0.001", "0.005", "0.01"];
+  const presetWagers = ["0.001", "0.005", "0.01", "0.02"];
   const [showHistory, setShowHistory] = useState(false);
   const [currentFlipAttempt, setCurrentFlipAttempt] = useState(null); 
 

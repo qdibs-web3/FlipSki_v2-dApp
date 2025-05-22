@@ -316,16 +316,6 @@ const CoinFlipPage = () => {
   else if (isSubmittingTransaction) buttonText = "Confirming Request...";
   else if (isFlipping) buttonText = "Flipping...Waiting on VRF";
 
-    // Track the last game result for XP updates
-  const [lastProcessedGame, setLastProcessedGame] = useState(null);
-
-  // Update lastProcessedGame when a new game result is available
-  useEffect(() => {
-    if (gameHistory.length > 0 && (!lastProcessedGame || lastProcessedGame.gameId !== gameHistory[0].gameId)) {
-      setLastProcessedGame(gameHistory[0]);
-    }
-  }, [gameHistory]);
-
   return (
     <div className="coinflip-container">
       <div className="coinflip-box">

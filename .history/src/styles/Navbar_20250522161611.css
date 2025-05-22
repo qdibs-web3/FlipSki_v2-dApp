@@ -14,7 +14,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.1rem 1rem;
+  padding: 0.5rem 1.5rem;
   border-bottom: 1px solid #ffffff;
   min-height: 40px;
   background: linear-gradient(170deg, #fff, #0a599c, #0a599c);
@@ -30,7 +30,7 @@ body {
 
 .logo {
   font-family: 'MyFont';
-  font-size: 50px;
+  font-size: 40px;
   color: #0093fb;
   font-weight: normal;
   text-shadow:
@@ -39,6 +39,7 @@ body {
     -2px  2px 0 rgb(0, 110, 255),
      2px  2px 0 rgb(0, 110, 255);
   animation: pulse 2s infinite ease-in-out;
+  margin-bottom: 25px;
 }
 
 @keyframes pulse {
@@ -72,7 +73,6 @@ body {
 @media (max-width: 600px) {
   .logo {
     max-height: 40px;
-    margin-bottom: 45px;
   }
 
 }

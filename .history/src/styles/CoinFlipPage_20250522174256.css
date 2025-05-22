@@ -46,7 +46,7 @@
 /* Task 1c: Game History Dropdown Styling */
 .game-history {
   width: 80%;
-  margin: 10px auto;
+  margin: 30px auto;
   background-color: rgba(0, 0, 0, 0.2);
   border-radius: 8px;
   border: 1px solid #007bff;
@@ -361,6 +361,7 @@
   max-width: 280px;
   text-align: left;
   box-shadow: 0 0 15px rgba(0, 123, 255, 0.7);
+  margin: 0;
   z-index: 100; /* Added z-index */
 }
 
