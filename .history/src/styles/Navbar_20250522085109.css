@@ -1,0 +1,80 @@
+@font-face {
+  font-family: 'MyFont';
+  src: url('../fonts/beachday.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+body {
+  font-family: 'MyFont', sans-serif;
+}
+
+/* src/styles/Navbar.css */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 1.5rem;
+  border-bottom: 1px solid #ffffff;
+  min-height: 40px;
+  background: linear-gradient(170deg, #fff, #0a599c, #0a599c);
+  background-size: 600% 600%;
+  animation: animatedBackground 10s ease infinite;
+}
+
+@keyframes animatedBackground {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.logo {
+  font-family: 'MyFont';
+  font-size: 90px;
+  color: #0093fb;
+  font-size: 60px;
+  font-weight: normal;
+  text-shadow:
+    -2px -2px 0 rgb(0, 110, 255),
+     2px -2px 0 rgb(0, 110, 255),
+    -2px  2px 0 rgb(0, 110, 255),
+     2px  2px 0 rgb(0, 110, 255);
+  animation: pulse 2s infinite ease-in-out;
+
+}
+
+@keyframes pulse {
+  0%, 100% {
+    text-shadow:
+      0 0 3px rgb(0, 110, 255),
+      0 0 6px rgb(0, 110, 255),
+      0 0 9px rgb(0, 110, 255),
+      0 0 12px rgb(0, 110, 255),
+      0 0 15px rgb(0, 110, 255);
+  }
+  50% {
+    text-shadow:
+      0 0 2px rgb(0, 110, 255),
+      0 0 4px rgb(0, 110, 255),
+      0 0 6px rgb(0, 110, 255),
+      0 0 8px rgb(0, 110, 255),
+      0 0 10px rgb(0, 110, 255);
+  }
+}
+
+.logo:hover {
+  transform: scale(1.1);
+}
+
+.wallet-section {
+  display: flex;
+  align-items: center;
+}
+
+@media (max-width: 600px) {
+  .logo {
+    max-height: 40px;
+  }
+
+}
+

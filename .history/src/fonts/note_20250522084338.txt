@@ -1,0 +1,2 @@
+border: #00deff
+letters: #0093fb

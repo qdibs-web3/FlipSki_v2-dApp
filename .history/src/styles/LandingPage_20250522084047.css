@@ -1,0 +1,79 @@
+@font-face {
+  font-family: 'MyFont';
+  src: url('../fonts/beachday.ttf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+body {
+  font-family: 'MyFont', sans-serif;
+}
+
+.landing-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 60px);
+  text-align: center;
+  background-color: #001543;
+  background-size: 100% 100%;
+  overflow: hidden;
+}
+
+.landing-header {
+  font-family: 'MyFont';
+  font-size: 100px;
+  color: #0093fb;
+  font-size: 60px;
+  font-weight: normal;
+  text-shadow:
+    -2px -2px 0 #3bfeff,
+     2px -2px 0 #3bfeff,
+    -2px  2px 0 #3bfeff,
+     2px  2px 0 #3bfeff;
+  animation: pulse 2s infinite ease-in-out;
+
+}
+
+@keyframes pulse {
+  0%, 100% {
+    text-shadow:
+      0 0 3px rgb(0, 110, 255),
+      0 0 6px #0ff,
+      0 0 9px #0ff,
+      0 0 12px #0ff,
+      0 0 15px #0ff;
+  }
+  50% {
+    text-shadow:
+      0 0 2px #0ff,
+      0 0 4px #0ff,
+      0 0 6px #0ff,
+      0 0 8px #0ff,
+      0 0 10px #0ff;
+  }
+}
+
+.play-button {
+  background-color: transparent;
+  border: 1px solid #ffffff;
+  color: #ffffff;
+  padding: 1rem 2rem;
+  font-size: 1.5rem;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+  font-family: 'MyFont';
+  margin: 5px;
+  min-width: 160px;
+}
+
+.play-button:hover {
+  background-color: #0093fb;
+  color: #031a03;
+  transform: scale(1.05);
+}
+
+
