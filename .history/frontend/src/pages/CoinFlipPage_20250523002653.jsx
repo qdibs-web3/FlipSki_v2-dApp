@@ -91,7 +91,7 @@ const CoinFlipPage = () => {
         ? window.location.origin  // Use the current origin in production
         : 'http://localhost:3001'; // Use localhost in development
       
-      const response = await fetch(`${baseUrl}/api/users/leaderboard`);
+      const response = await fetch(`${baseUrl}/api/users/leaderboard` );
       if (!response.ok) {
         throw new Error(`Failed to fetch leaderboard data: ${response.status} ${response.statusText}`);
       }
@@ -102,6 +102,7 @@ const CoinFlipPage = () => {
       setLeaderboardData([]);
     }
   }, []);
+  
 
   const fetchGameHistory = useCallback(async () => {
     if (!publicClient || !walletAddress) return;
@@ -482,7 +483,7 @@ const CoinFlipPage = () => {
                     <th>User</th>
                     <th>Level</th>
                     <th>Total XP</th>
-                    <th>W's</th>
+                    <th>Wins</th>
                     <th>L's</th>
                     <th>W/L Ratio</th>
                   </tr>
@@ -494,14 +495,12 @@ const CoinFlipPage = () => {
                         <td>{user.walletAddress.slice(0, 6)}...{user.walletAddress.slice(-4)}</td>
                         <td>{user.level}</td>
                         <td>{user.xp}</td>
-                        <td>{user.wins}</td>
-                        <td>{user.losses}</td>
                         <td>{user.wlRatio}</td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="6">No leaderboard data available</td>
+                      <td colSpan="4">No leaderboard data available</td>
                     </tr>
                   )}
                 </tbody>

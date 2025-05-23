@@ -16,8 +16,6 @@ router.get('/leaderboard', async (req, res) => {
         walletAddress: user.walletAddress,
         level: user.level,
         xp: user.xp,
-        wins: user.wins,
-        losses: user.losses,
         wlRatio: wlRatio
       };
     });

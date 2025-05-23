@@ -45,7 +45,7 @@
 
 /* Task 1c: Game History Dropdown Styling */
 .game-history {
-  width: 100%;
+  width: 80%;
   margin: 10px auto;
   background-color: rgba(0, 0, 0, 0.2);
   border-radius: 8px;
@@ -54,47 +54,19 @@
   padding: 0; /* Remove padding here, will add to children */
 }
 
-.game-history-tabs {
-  display: flex;
-  width: 100%;
-  background-color: #007bff;
-  border-radius: 8px 8px 0 0;
-}
-
-.game-history-tab {
-  flex: 1;
-  padding: 12px 20px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  cursor: pointer;
-  font-size: 18px;
-  font-weight: 200;
-  transition: background-color 0.2s ease;
-  text-align: center;
-}
-
-.game-history-tab:first-child {
-  border-radius: 8px 0 0 0;
-}
-
-.game-history-tab.active-tab {
-  background-color: #0059b8;
-}
-
 .game-history-toggle {
   background-color: #007bff;
   color: rgb(255, 255, 255);
   border: none;
   padding: 12px 20px;
-  width: 50px;
-  text-align: center;
+  width: 100%;
+  text-align: left;
   font-size: 18px; /* Adjusted from 20px */
   font-weight: 200;
   cursor: pointer;
-  border-radius: 0 8px 0 0; /* Rounded top right corner */
+  border-radius: 8px 8px 0 0; /* Rounded top corners if history is shown below */
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
 }
 
@@ -139,35 +111,6 @@
   text-align: center;
   color: #ccc;
   padding: 20px;
-}
-
-.leaderboard-container {
-  padding: 15px;
-  max-height: 300px;
-  overflow-y: auto;
-}
-
-.leaderboard-table {
-  width: 100%;
-  border-collapse: collapse;
-  color: #f0f0f0;
-}
-
-.leaderboard-table th, 
-.leaderboard-table td {
-  padding: 10px;
-  text-align: left;
-  border-bottom: 1px solid #0059b8;
-}
-
-.leaderboard-table th {
-  background-color: rgba(0, 123, 255, 0.2);
-  font-weight: 200;
-  color: #39ff14;
-}
-
-.leaderboard-table tr:hover {
-  background-color: rgba(0, 123, 255, 0.1);
 }
 
 .coinflip-box {
@@ -469,7 +412,7 @@
   }
 
   .game-history {
-    width: 100%;
+    width: 90%;
   }
   .game-history-toggle {
     font-size: 16px;
@@ -513,21 +456,6 @@
   }
   .coin-placeholder {
     font-size: 16px;
-  }
-  
-  .game-history-tabs {
-    flex-direction: row;
-  }
-  
-  .game-history-tab {
-    font-size: 14px;
-    padding: 10px;
-  }
-  
-  .leaderboard-table th, 
-  .leaderboard-table td {
-    padding: 8px;
-    font-size: 14px;
   }
 }
 
@@ -594,21 +522,5 @@
   .wallet-info-active .balance-info {
     font-size: 14px;    /* Changed from 13px (inherited) */
   }
-  
-  .game-history-tab {
-    font-size: 12px;
-    padding: 8px 5px;
-  }
-
-  .leaderboard-table th {
-    padding: 6px;
-    font-size: 12px;
-    text-align: left;
-  }
-   
-  .leaderboard-table td {
-    padding: 6px;
-    font-size: 12px;
-    text-align: center;
-  }
 }
+

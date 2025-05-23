@@ -45,7 +45,7 @@
 
 /* Task 1c: Game History Dropdown Styling */
 .game-history {
-  width: 100%;
+  width: 80%;
   margin: 10px auto;
   background-color: rgba(0, 0, 0, 0.2);
   border-radius: 8px;
@@ -469,7 +469,7 @@
   }
 
   .game-history {
-    width: 100%;
+    width: 90%;
   }
   .game-history-toggle {
     font-size: 16px;
@@ -599,16 +599,10 @@
     font-size: 12px;
     padding: 8px 5px;
   }
-
-  .leaderboard-table th {
-    padding: 6px;
-    font-size: 12px;
-    text-align: left;
-  }
-   
+  
+  .leaderboard-table th, 
   .leaderboard-table td {
     padding: 6px;
     font-size: 12px;
-    text-align: center;
   }
 }
