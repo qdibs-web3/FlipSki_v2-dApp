@@ -1,0 +1,16 @@
+{
+    "name": "flipski",
+    "version": "1.0.0",
+    "description": "FlipSki - Blockchain-based coin flip game",
+    "private": true,
+    "scripts": {
+      "start": "cd frontend && npm start",
+      "build": "cd frontend && npm run build",
+      "install-all": "npm install && cd frontend && npm install && cd ../backend && npm install"
+    },
+    "engines": {
+      "node": ">=18.0.0"
+    },
+    "author": "",
+    "license": "ISC"
+  }
