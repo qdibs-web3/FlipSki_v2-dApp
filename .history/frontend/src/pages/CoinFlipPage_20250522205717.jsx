@@ -84,63 +84,57 @@ const CoinFlipPage = () => {
 
   const fetchGameHistory = useCallback(async () => {
     if (!publicClient || !walletAddress) return;
+    // console.log("HISTORY_DEBUG: Starting fetchGameHistory"); // Keep or remove debug logs as needed
     try {
       const gameSettledEventAbi = FlipSkiBaseVRFABI.abi.find(
-        (item) => item && item.name === "GameSettled" && item.type === "event"
+        (item) => item.name === "GameSettled" && item.type === "event"
       );
       if (!gameSettledEventAbi) {
         console.error("HISTORY_DEBUG: GameSettled event ABI not found.");
         return;
       }
-      
-      // Add try-catch around getLogs
-      let logs = [];
-      try {
-        logs = await publicClient.getLogs({
-          address: COINFLIP_CONTRACT_ADDRESS,
-          event: gameSettledEventAbi,
-          args: { player: walletAddress },
-          fromBlock: "earliest",
-          toBlock: "latest",
-        });
-      } catch (logsError) {
-        console.error("Error fetching logs:", logsError);
-        logs = []; // Ensure logs is an array even on error
-      }
-  
-      // Add defensive checks in filter and map
-      const history = (logs || [])
+      const logs = await publicClient.getLogs({
+        address: COINFLIP_CONTRACT_ADDRESS,
+        event: gameSettledEventAbi,
+        args: { player: walletAddress },
+        fromBlock: "earliest",
+        toBlock: "latest",
+      });
+      // console.log(`HISTORY_DEBUG: Found ${logs.length} GameSettled logs for player.`);
+
+      const history = logs
         .filter(log => {
-          return log && log.args && 
-                 typeof log.args.gameId !== 'undefined' && 
-                 typeof log.args.result !== 'undefined' && 
-                 typeof log.args.payoutAmount !== 'undefined' && 
-                 log.transactionHash;
+            const isValid = log.args && log.args.gameId !== undefined && log.args.result !== undefined && log.args.payoutAmount !== undefined && log.transactionHash;
+            // if (!isValid) {
+            //     console.log("HISTORY_DEBUG: Filtering out invalid log:", log);
+            // }
+            return isValid;
         })
-        .map((log) => {
-          const rawResult = log.args.result;
+        .map((log, index) => {
+          // console.log(`HISTORY_DEBUG: Processing log index ${index}:`, log); // Keep or remove debug logs
+          const rawResult = log.args.result; 
+          // CRITICAL FIX: Ensure correct comparison for Heads/Tails mapping
           const mappedResult = Number(rawResult) === 0 ? "Heads" : "Tails";
           const payoutAmount = log.args.payoutAmount;
           const won = payoutAmount > 0n;
+          // console.log(`HISTORY_DEBUG: Log ${index} - GameID: ${log.args.gameId.toString()}, Raw Result (type ${typeof rawResult}): ${rawResult}, Mapped Result: ${mappedResult}, Payout: ${formatEther(payoutAmount)}, Won: ${won}`);
           
           return {
             gameId: log.args.gameId.toString(),
             result: mappedResult, 
             payout: formatEther(payoutAmount),
             won: won,
-            fulfillmentTxHash: log.transactionHash,
-            vrfRequestId: log.args.vrfRequestId ? log.args.vrfRequestId.toString() : null,
+            fulfillmentTxHash: log.transactionHash, // Ensure this is passed for the link
+            vrfRequestId: log.args.vrfRequestId ? log.args.vrfRequestId.toString() : null, // Keep if needed
           };
         })
         .reverse();
-      
       setGameHistory(history.slice(0, 10));
+      // console.log("HISTORY_DEBUG: Finished processing game history. History items set:", history.slice(0,10).length);
     } catch (err) {
       console.error("HISTORY_DEBUG: Error fetching game history:", err);
-      setGameHistory([]); // Set to empty array on error
     }
   }, [publicClient, walletAddress]);
-  
 
   useEffect(() => {
     if (walletAddress) {
