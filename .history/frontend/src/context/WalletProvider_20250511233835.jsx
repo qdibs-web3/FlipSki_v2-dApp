@@ -11,9 +11,6 @@ import {
   useSigner, // Import useSigner
 } from "@thirdweb-dev/react";
 
-// Add SSR safety check
-const isBrowser = typeof window !== 'undefined';
-
 const WalletContext = createContext({
   walletAddress: null,
   connectWallet: async () => {},
@@ -41,20 +38,7 @@ export const WalletProvider = ({ children }) => {
   // Update isConnected logic to use the presence of a signer
   const calculatedIsConnected = connectionStatus === "connected" && !!signer;
 
-  // Add environment logging for debugging
   useEffect(() => {
-    if (isBrowser) {
-      console.log("Environment:", {
-        isProd: import.meta.env?.PROD || false,
-        isBrowser: true,
-        hasEthereum: !!window.ethereum,
-      });
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!isBrowser) return; // Skip this effect during SSR
-    
     console.log("WalletProvider State Update:");
     console.log("  - address (from useAddress):", address);
     console.log("  - connectionStatus (from useConnectionStatus):", connectionStatus);
@@ -72,8 +56,6 @@ export const WalletProvider = ({ children }) => {
   }, [address, connectionStatus, signer, sdkIsConnecting, isConnectActionLoading, overallIsConnecting, calculatedIsConnected]);
 
   const connectWallet = async () => {
-    if (!isBrowser) return; // Skip during SSR
-    
     setIsConnectActionLoading(true);
     console.log("WalletProvider: connectWallet action started");
     try {
@@ -88,8 +70,6 @@ export const WalletProvider = ({ children }) => {
   };
 
   const disconnectWallet = async () => {
-    if (!isBrowser) return; // Skip during SSR
-    
     console.log("WalletProvider: disconnectWallet action started");
     try {
       await disconnect();
@@ -121,3 +101,4 @@ export const WalletProvider = ({ children }) => {
 };
 
 export const useWallet = () => useContext(WalletContext);
+

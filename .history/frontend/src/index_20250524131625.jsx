@@ -5,7 +5,7 @@ import { ThirdwebProvider } from "@thirdweb-dev/react";
 import { metamaskWallet } from "@thirdweb-dev/react";
 import { baseSepoliaChain } from './config';
 import App from './App';
-import './styles/index.css';
+import './index.css';
 
 // Check if we're in a browser environment
 const isBrowser = typeof window !== 'undefined';
@@ -31,3 +31,4 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     </ThirdwebProvider>
   </React.StrictMode>,
 );
+

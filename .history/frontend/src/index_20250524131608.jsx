@@ -5,7 +5,7 @@ import { ThirdwebProvider } from "@thirdweb-dev/react";
 import { metamaskWallet } from "@thirdweb-dev/react";
 import { baseSepoliaChain } from './config';
 import App from './App';
-import './styles/index.css';
+import './index.css';
 
 // Check if we're in a browser environment
 const isBrowser = typeof window !== 'undefined';
@@ -13,7 +13,7 @@ const isBrowser = typeof window !== 'undefined';
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <ThirdwebProvider 
-      clientId={import.meta.env.REACT_APP_THIRDWEB_CLIENT_ID}
+      clientId={import.meta.env.VITE_THIRDWEB_CLIENT_ID}
       supportedChains={[baseSepoliaChain]} 
       supportedWallets={[metamaskWallet()]}
       dAppMeta={{
@@ -31,3 +31,4 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     </ThirdwebProvider>
   </React.StrictMode>,
 );
+
