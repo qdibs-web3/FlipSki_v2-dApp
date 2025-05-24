@@ -50,21 +50,6 @@ app.get('/api/users/leaderboard', async (req, res) => {
   }
 });
 
-// Dynamic user route with wallet address
-app.get('/api/users/:walletAddress', async (req, res) => {
-  try {
-    // Add the wallet address to the query params to match the serverless function expectation
-    req.query.walletAddress = req.params.walletAddress;
-    
-    const userModule = require('./api/users/index');
-    await userModule(req, res);
-  } catch (error) {
-    console.error('Error in user endpoint:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// Fallback for the original query parameter route
 app.get('/api/users', async (req, res) => {
   try {
     const userModule = require('./api/users/index');
@@ -75,21 +60,6 @@ app.get('/api/users', async (req, res) => {
   }
 });
 
-// Update XP endpoint with wallet address in URL
-app.post('/api/users/:walletAddress/update-xp', async (req, res) => {
-  try {
-    // Add the wallet address to the query params to match the serverless function expectation
-    req.query.walletAddress = req.params.walletAddress;
-    
-    const updateXpModule = require('./api/users/update-xp');
-    await updateXpModule(req, res);
-  } catch (error) {
-    console.error('Error in update-xp endpoint:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// Fallback for the original update-xp route
 app.post('/api/users/update-xp', async (req, res) => {
   try {
     const updateXpModule = require('./api/users/update-xp');
@@ -106,6 +76,6 @@ app.listen(PORT, () => {
   console.log('Available endpoints:');
   console.log('- GET  /api/health');
   console.log('- GET  /api/users/leaderboard');
-  console.log('- GET  /api/users/:walletAddress');
-  console.log('- POST /api/users/:walletAddress/update-xp');
+  console.log('- GET  /api/users?walletAddress=0x...');
+  console.log('- POST /api/users/update-xp');
 });
