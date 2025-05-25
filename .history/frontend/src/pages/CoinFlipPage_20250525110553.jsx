@@ -47,7 +47,9 @@ const CoinFlipPage = () => {
   const [activeTab, setActiveTab] = useState("history"); // "history" or "leaderboard"
   const [leaderboardData, setLeaderboardData] = useState([]); 
 
+  // Only create client if in browser environment
   const publicClient = useMemo(() => {
+    if (!isBrowser) return null;
     return createPublicClient({
       chain: baseSepoliaChain,
       transport: http(),
