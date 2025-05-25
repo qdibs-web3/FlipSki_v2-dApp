@@ -17,11 +17,11 @@ const SafeThirdwebProvider = ({ children }) => {
     return <>{children}</>;
   }
 
-  // In browser, use ThirdwebProvider with minimal required props
+  // In browser, use ThirdwebProvider
   return (
     <ThirdwebProvider 
       activeChain={baseSepoliaChain}
-      clientId={import.meta.env.REACT_APP_THIRDWEB_CLIENT_ID || ""}
+      clientId={import.meta.env.VITE_THIRDWEB_CLIENT_ID || ""}
       supportedWallets={[metamaskWallet()]}
       dAppMeta={{
         name: "FlipSki",

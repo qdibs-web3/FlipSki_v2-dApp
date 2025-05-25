@@ -21,7 +21,7 @@ const SafeThirdwebProvider = ({ children }) => {
   return (
     <ThirdwebProvider 
       activeChain={baseSepoliaChain}
-      clientId={import.meta.env.REACT_APP_THIRDWEB_CLIENT_ID || ""}
+      clientId={import.meta.env.REACT_APP_THIRDWEB_CLIENT_ID || "7f8c19e1d729d08da2b1a29179a940aa"}
       supportedWallets={[metamaskWallet()]}
       dAppMeta={{
         name: "FlipSki",

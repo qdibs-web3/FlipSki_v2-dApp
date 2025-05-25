@@ -5,7 +5,7 @@ import { ThirdwebProvider } from "@thirdweb-dev/react";
 import { metamaskWallet } from "@thirdweb-dev/react";
 import { baseSepoliaChain } from './config';
 import App from './App';
-import './styles/index.css';
+import './index.css';
 
 // Check if we're in a browser environment
 const isBrowser = typeof window !== 'undefined';
@@ -17,11 +17,11 @@ const SafeThirdwebProvider = ({ children }) => {
     return <>{children}</>;
   }
 
-  // In browser, use ThirdwebProvider with minimal required props
+  // In browser, use ThirdwebProvider
   return (
     <ThirdwebProvider 
       activeChain={baseSepoliaChain}
-      clientId={import.meta.env.REACT_APP_THIRDWEB_CLIENT_ID || ""}
+      clientId={import.meta.env.VITE_THIRDWEB_CLIENT_ID || ""}
       supportedWallets={[metamaskWallet()]}
       dAppMeta={{
         name: "FlipSki",
