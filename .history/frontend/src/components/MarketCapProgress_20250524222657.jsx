@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "../styles/MarketCapProgress.css";
-import milestone1Icon from '../assets/flip1.png'; // Using existing logo as placeholder
+import milestone1Icon from '../assets/fli1.png'; // Using existing logo as placeholder
 import milestone2Icon from '../assets/ski1.png';
 
 function MarketCapProgress() {

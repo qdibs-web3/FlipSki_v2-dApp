@@ -12,10 +12,12 @@ function Chad() {
   useEffect(() => {
     const initializeMoralis = async () => {
       try {
-        const apiKey = import.meta.env.VITE_MORALIS_API_KEY;
+        const apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJub25jZSI6IjdhN2M0ZjJkLTg5M2YtNDZkOC1hMDJiLTFhYjQwZGU0N2ZlZSIsIm9yZ0lkIjoiNDI4NDg0IiwidXNlcklkIjoiNDQwNzUwIiwidHlwZUlkIjoiNmMyNjg1N2EtYmY2Zi00MjhkLWFkYWQtZDdiYjg4OTE1ZWY4IiwidHlwZSI6IlBST0pFQ1QiLCJpYXQiOjE3MzgzMDE4NjksImV4cCI6NDg5NDA2MTg2OX0.5dejEGS0-_vU9LCp-isjt_r6VGcb2PCEMiFaDUV5M0E";
         if (!apiKey) {
           throw new Error("Moralis API key is missing.");
         }
+
+        // Initialize Moralis only if it's not already initialized
         if (!Moralis.Core.isStarted) {
           await Moralis.start({ apiKey });
           console.log("Moralis initialized");
@@ -38,7 +40,12 @@ function Chad() {
           limit: "30",
           order: "DESC",
           tokenAddress: "0x768BE13e1680b5ebE0024C42c896E3dB59ec0149",
-        },);
+        }, {
+          headers: {
+            "X-API-Key": process.env.REACT_APP_MORALIS_API_KEY, // Use your API key from environment variables
+            "Content-Type": "application/json",
+          },
+        });
   
         console.log(response); // Log the response to check its structure
   

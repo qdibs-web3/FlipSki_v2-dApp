@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import "../styles/MarketCapProgress.css";
-import milestone1Icon from '../assets/flip1.png'; // Using existing logo as placeholder
-import milestone2Icon from '../assets/ski1.png';
+import milestone1Icon from '../assets/flip.png'; // Using existing logo as placeholder
+import milestone2Icon from '../assets/ski.png';
+import milestone3Icon from '../assets/flip.png';
 
 function MarketCapProgress() {
     const [marketCap, setMarketCap] = useState(0);

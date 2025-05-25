@@ -38,7 +38,12 @@ function Chad() {
           limit: "30",
           order: "DESC",
           tokenAddress: "0x768BE13e1680b5ebE0024C42c896E3dB59ec0149",
-        },);
+        }, {
+          headers: {
+            "X-API-Key": process.env.VITE_MORALIS_API_KEY, // Use your API key from environment variables
+            "Content-Type": "application/json",
+          },
+        });
   
         console.log(response); // Log the response to check its structure
   
