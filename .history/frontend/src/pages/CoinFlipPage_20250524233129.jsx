@@ -337,7 +337,7 @@ const CoinFlipPage = () => {
       setIsSubmittingTransaction(false);
 
       let parsedGameRequested = null;
-      // Add defensive check for ABI
+      // Add defensive checks for ABI
       if (!FlipSkiBaseVRFABI || !FlipSkiBaseVRFABI.abi) {
         console.error("REQUEST_DEBUG: FlipSkiBaseVRFABI or its abi property is undefined");
         setError("Error processing transaction. Check game history for updates.");
@@ -443,108 +443,136 @@ const CoinFlipPage = () => {
   else if (isSubmittingTransaction) buttonText = "Confirming Request...";
   else if (isFlipping) buttonText = "Flipping...Waiting on VRF";
 
-    // Track the last game result for XP updates
+  // Track the last game result for XP updates
   const [lastProcessedGame, setLastProcessedGame] = useState(null);
 
   // Update lastProcessedGame when a new game result is available
   useEffect(() => {
     if (!isBrowser) return; // Skip during SSR
     
-    if (gameHistory.length > 0 && (!lastProcessedGame || lastProcessedGame.gameId !== gameHistory[0].gameId)) {
-      setLastProcessedGame(gameHistory[0]);
+    if (gameHistory.length > 0 && flipResult && flipResult.outcome !== "unknown" && flipResult.outcome !== "error") {
+      const latestGame = gameHistory[0];
+      setLastProcessedGame({
+        gameId: latestGame.gameId,
+        won: latestGame.won
+      });
     }
-  }, [gameHistory]);
-
-  // If not in browser environment, return minimal content
-  if (!isBrowser) {
-    return <div className="coinflip-container">Loading...</div>;
-  }
+  }, [gameHistory, flipResult]);
 
   return (
     <div className="coinflip-container">
-      <div className="coinflip-box">
-      {walletAddress && (
-        <LevelSystem walletAddress={walletAddress} gameResult={lastProcessedGame} />
-      )}
+      <div className="coinflip-content">
+        <div className="coinflip-header">
+          <h1>MAKE YOUR WAGER AND FLIPSKI!</h1>
+        </div>
 
-        {walletAddress && (
-          <div className="wallet-info-active">
-            <p>Wallet : <span className="wallet-address">{walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}</span></p>
-            <p>Balance: <span className="balance-info">{parseFloat(ethBalance).toFixed(4)} ETH</span></p>
+        <div className="coinflip-main">
+          <div className="coinflip-left">
+            <div className="side-selection">
+              <button
+                className={`side-button ${selectedSide === "heads" ? "selected" : ""}`}
+                onClick={() => setSelectedSide("heads")}
+              >
+                FLIP
+              </button>
+              <button
+                className={`side-button ${selectedSide === "tails" ? "selected" : ""}`}
+                onClick={() => setSelectedSide("tails")}
+              >
+                SKI
+              </button>
+            </div>
+
+            <div className="wager-input">
+              <input
+                type="text"
+                value={wager}
+                onChange={(e) => setWager(e.target.value)}
+                placeholder="Enter wager in ETH"
+                disabled={isFlipping || isSubmittingTransaction}
+              />
+            </div>
+
+            <div className="preset-wagers">
+              {presetWagers.map((presetWager) => (
+                <button
+                  key={presetWager}
+                  className="preset-wager-button"
+                  onClick={() => setWager(presetWager)}
+                  disabled={isFlipping || isSubmittingTransaction}
+                >
+                  {presetWager} ETH
+                </button>
+              ))}
+            </div>
+
+            <button
+              className="flip-button"
+              onClick={handleDegen}
+              disabled={isFlipping || isSubmittingTransaction || !isConnected}
+            >
+              {buttonText}
+            </button>
+
+            {error && <div className="error-message">{error}</div>}
+
+            {flipResult && (
+              <div className={`result-display ${flipResult.outcome}`}>
+                <p>
+                  {flipResult.outcome === "win"
+                    ? `You won ${flipResult.payout} ETH!`
+                    : flipResult.outcome === "loss"
+                    ? `You lost ${flipResult.wagered} ETH`
+                    : "Result pending..."}
+                </p>
+                {flipResult.side !== "unknown" && (
+                  <p>Result: {flipResult.side.toUpperCase()}</p>
+                )}
+              </div>
+            )}
           </div>
-        )}
 
-        {userRelatedError && <p className="wallet-warning">Wallet Error: {userRelatedError.message}</p>}
+          <div className="coinflip-right">
+            <div className="info-display">
+              <p>SELECT: {getSelectedSideText()} (H) OR SKI (T)</p>
+              <p>WAGER: FOR {wager || "0.000"} ETH</p>
+              <p>POTENTIAL PAYOUT: {potentialEarningsValue} ETH</p>
+            </div>
+          </div>
+        </div>
 
-        <div className="coin-display-area">
-          {isFlipping ? (
-            <div className="coin-flipping-animation">
-              <img src={coinImage} alt="Flipping Coin" className="coin-image" />
+        <div className="coinflip-box">
+          {walletAddress && (
+            <LevelSystem walletAddress={walletAddress} gameResult={lastProcessedGame} />
+          )}
+
+          {walletAddress && (
+            <div className="wallet-info-active">
+              <p>Wallet : <span className="wallet-address">{walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}</span></p>
+              <p>Balance: <span className="balance-info">{parseFloat(ethBalance).toFixed(4)} ETH</span></p>
             </div>
-          ) : flipResult ? (
-            <div className="flip-result-display">
-              <img src={flipResult.side === "heads" ? headsImage : tailsImage} alt={flipResult.side} className="coin-image result-coin-image" />
-              {flipResult.outcome === "win" && <p className="win-message">You Won! Wagered: {flipResult.wagered} ETH, Payout: {flipResult.payout} ETH</p>}
-              {flipResult.outcome === "loss" && <p className="loss-message">You Lost. Wagered: {flipResult.wagered} ETH</p>}
-              {flipResult.outcome === "unknown" && <p className="unknown-message">Outcome Unknown. Wagered: {flipResult.wagered} ETH. Check console.</p>}
-              {flipResult.outcome === "error" && <p className="error-message-result">Flip Error. Wagered: {flipResult.wagered} ETH. Check console.</p>}
-            </div>
-          ) : (
-            <div className="coin-placeholder">Make your wager and FLIPSKI!</div>
           )}
         </div>
 
-        {error && <p className="error-message">{error}</p>}
-
-        <div className="controls-and-selection-display-area">
-          <div className="coinflip-controls">
-            <div className="side-selection">
-              <button className={selectedSide === "heads" ? "selected" : ""} onClick={() => setSelectedSide("heads")}>FLIP</button>
-              <button className={selectedSide === "tails" ? "selected" : ""} onClick={() => setSelectedSide("tails")}>SKI</button>
-            </div>
-            <div className="wager-input">
-              <input type="number" value={wager} onChange={(e) => setWager(e.target.value)} placeholder="Enter wager in ETH" step="0.001" min={presetWagers[0]} />
-              <div className="preset-wagers">
-                {presetWagers.map((amount) => (<button key={amount} onClick={() => setWager(amount)}>{amount} ETH</button>))}
-              </div>
-            </div>
-            <button className="degen-button" onClick={handleDegen} disabled={!isConnected || isSubmittingTransaction || isFlipping || isConnecting}>
-              {buttonText}
-            </button>
-          </div>
-
-          <div className="selected-coin-display">
-            {selectedSide && (
-              <img src={selectedSide === "heads" ? headsImage : tailsImage} alt={`${selectedSide} choice`} className="selected-choice-image" />
-            )}
-            {!selectedSide && !isFlipping && !flipResult && (
-                 <div className="selected-choice-placeholder-text">Select: FLIP (H) or SKI (T)</div>
-            )}
-            <p className="preview-wager">Wager: {getSelectedSideText()} for {wager} ETH</p>
-            <p className="potential-earnings">Potential Payout: {potentialEarningsValue} ETH</p>
-          </div>
-        </div>
-
-        {/* User's requested JSX for game history with VRF link and corrected logic */}
-        <div className="game-history">
-          <div className="game-history-tabs">
-            <button 
-              onClick={() => handleTabChange("history")} 
-              className={`game-history-tab ${activeTab === "history" ? "active-tab" : ""}`}
+        <div className="history-section">
+          <div className="history-tabs">
+            <button
+              className={`history-tab ${activeTab === "history" ? "active" : ""}`}
+              onClick={() => handleTabChange("history")}
             >
               Last 10 FLIPSKI Wagers
             </button>
-            <button 
-              onClick={() => handleTabChange("leaderboard")} 
-              className={`game-history-tab ${activeTab === "leaderboard" ? "active-tab" : ""}`}
+            <button
+              className={`history-tab ${activeTab === "leaderboard" ? "active" : ""}`}
+              onClick={() => handleTabChange("leaderboard")}
             >
               Leaderboards
             </button>
-            <button onClick={toggleHistory} className="game-history-toggle">
-              {showHistory ? "\u25B2" : "\u25BC"} {/* Unicode for up/down triangles */}
+            <button className="toggle-history" onClick={toggleHistory}>
+              {showHistory ? "▲" : "▼"}
             </button>
           </div>
-          
+
           {showHistory && activeTab === "history" && gameHistory.length > 0 && (
             <ul>
               {gameHistory.map((game) => (

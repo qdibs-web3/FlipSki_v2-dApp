@@ -443,7 +443,7 @@ const CoinFlipPage = () => {
   else if (isSubmittingTransaction) buttonText = "Confirming Request...";
   else if (isFlipping) buttonText = "Flipping...Waiting on VRF";
 
-    // Track the last game result for XP updates
+  // Track the last game result for XP updates
   const [lastProcessedGame, setLastProcessedGame] = useState(null);
 
   // Update lastProcessedGame when a new game result is available
@@ -496,55 +496,77 @@ const CoinFlipPage = () => {
 
         {error && <p className="error-message">{error}</p>}
 
-        <div className="controls-and-selection-display-area">
-          <div className="coinflip-controls">
-            <div className="side-selection">
-              <button className={selectedSide === "heads" ? "selected" : ""} onClick={() => setSelectedSide("heads")}>FLIP</button>
-              <button className={selectedSide === "tails" ? "selected" : ""} onClick={() => setSelectedSide("tails")}>SKI</button>
-            </div>
-            <div className="wager-input">
-              <input type="number" value={wager} onChange={(e) => setWager(e.target.value)} placeholder="Enter wager in ETH" step="0.001" min={presetWagers[0]} />
-              <div className="preset-wagers">
-                {presetWagers.map((amount) => (<button key={amount} onClick={() => setWager(amount)}>{amount} ETH</button>))}
-              </div>
-            </div>
-            <button className="degen-button" onClick={handleDegen} disabled={!isConnected || isSubmittingTransaction || isFlipping || isConnecting}>
-              {buttonText}
-            </button>
-          </div>
-
-          <div className="selected-coin-display">
-            {selectedSide && (
-              <img src={selectedSide === "heads" ? headsImage : tailsImage} alt={`${selectedSide} choice`} className="selected-choice-image" />
-            )}
-            {!selectedSide && !isFlipping && !flipResult && (
-                 <div className="selected-choice-placeholder-text">Select: FLIP (H) or SKI (T)</div>
-            )}
-            <p className="preview-wager">Wager: {getSelectedSideText()} for {wager} ETH</p>
-            <p className="potential-earnings">Potential Payout: {potentialEarningsValue} ETH</p>
-          </div>
+        <div className="side-selection">
+          <button
+            className={`side-button ${selectedSide === "heads" ? "selected" : ""}`}
+            onClick={() => setSelectedSide("heads")}
+            disabled={isFlipping || isSubmittingTransaction}
+          >
+            FLIP (Heads)
+          </button>
+          <button
+            className={`side-button ${selectedSide === "tails" ? "selected" : ""}`}
+            onClick={() => setSelectedSide("tails")}
+            disabled={isFlipping || isSubmittingTransaction}
+          >
+            SKI (Tails)
+          </button>
         </div>
 
-        {/* User's requested JSX for game history with VRF link and corrected logic */}
-        <div className="game-history">
-          <div className="game-history-tabs">
-            <button 
-              onClick={() => handleTabChange("history")} 
-              className={`game-history-tab ${activeTab === "history" ? "active-tab" : ""}`}
+        <div className="wager-input">
+          <input
+            type="text"
+            value={wager}
+            onChange={(e) => setWager(e.target.value)}
+            placeholder="Enter wager in ETH"
+            disabled={isFlipping || isSubmittingTransaction}
+          />
+        </div>
+
+        <div className="preset-wagers">
+          {presetWagers.map((presetWager) => (
+            <button
+              key={presetWager}
+              className="preset-wager-button"
+              onClick={() => setWager(presetWager)}
+              disabled={isFlipping || isSubmittingTransaction}
             >
-              Last 10 FLIPSKI Wagers
+              {presetWager} ETH
             </button>
-            <button 
-              onClick={() => handleTabChange("leaderboard")} 
-              className={`game-history-tab ${activeTab === "leaderboard" ? "active-tab" : ""}`}
+          ))}
+        </div>
+
+        <div className="potential-earnings">
+          <p>Potential Earnings: {potentialEarningsValue} ETH</p>
+        </div>
+
+        <button
+          className="flip-button"
+          onClick={handleDegen}
+          disabled={isFlipping || isSubmittingTransaction || !isConnected}
+        >
+          {buttonText}
+        </button>
+
+        <div className="history-section">
+          <div className="history-tabs">
+            <button
+              className={`history-tab ${activeTab === "history" ? "active" : ""}`}
+              onClick={() => handleTabChange("history")}
             >
-              Leaderboards
+              Game History
             </button>
-            <button onClick={toggleHistory} className="game-history-toggle">
-              {showHistory ? "\u25B2" : "\u25BC"} {/* Unicode for up/down triangles */}
+            <button
+              className={`history-tab ${activeTab === "leaderboard" ? "active" : ""}`}
+              onClick={() => handleTabChange("leaderboard")}
+            >
+              Leaderboard
+            </button>
+            <button className="toggle-history" onClick={toggleHistory}>
+              {showHistory ? "▲" : "▼"}
             </button>
           </div>
-          
+
           {showHistory && activeTab === "history" && gameHistory.length > 0 && (
             <ul>
               {gameHistory.map((game) => (

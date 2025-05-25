@@ -464,7 +464,9 @@ const CoinFlipPage = () => {
     <div className="coinflip-container">
       <div className="coinflip-box">
       {walletAddress && (
-        <LevelSystem walletAddress={walletAddress} gameResult={lastProcessedGame} />
+        <ErrorBoundary>
+          <LevelSystem walletAddress={walletAddress} gameResult={lastProcessedGame} />
+        </ErrorBoundary>
       )}
 
         {walletAddress && (

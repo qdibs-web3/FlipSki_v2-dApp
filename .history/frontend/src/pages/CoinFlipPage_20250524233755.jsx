@@ -19,6 +19,7 @@ import headsImage from "../assets/flip1.png";
 import tailsImage from "../assets/ski1.png";
 import "../styles/CoinFlipPage.css";
 import LevelSystem from "../components/LevelSystem";
+import ErrorBoundary from "../components/ErrorBoundary";
 
 // Add SSR safety check
 const isBrowser = typeof window !== 'undefined';
@@ -464,7 +465,9 @@ const CoinFlipPage = () => {
     <div className="coinflip-container">
       <div className="coinflip-box">
       {walletAddress && (
-        <LevelSystem walletAddress={walletAddress} gameResult={lastProcessedGame} />
+        <ErrorBoundary>
+          <LevelSystem walletAddress={walletAddress} gameResult={lastProcessedGame} />
+        </ErrorBoundary>
       )}
 
         {walletAddress && (
