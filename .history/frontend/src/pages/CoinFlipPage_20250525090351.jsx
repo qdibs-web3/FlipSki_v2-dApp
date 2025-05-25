@@ -21,7 +21,7 @@ import "../styles/CoinFlipPage.css";
 import LevelSystem from "../components/LevelSystem";
 
 // Add SSR safety check
-const isBrowser = typeof window !== 'undefined' && window.document !== undefined;
+const isBrowser = typeof window !== 'undefined';
 
 const CoinFlipPage = () => {
   const {
