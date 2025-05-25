@@ -12,7 +12,8 @@
   "dependencies": {
     "@tanstack/react-query": "^4.36.1",
     "@thirdweb-dev/chains": "^0.1.120",
-    "@thirdweb-dev/react": "^4.1.10",
+    "@thirdweb-dev/react": "^4.9.4",
+    "@vitejs/plugin-react": "^4.2.1",
     "axios": "^1.9.0",
     "ethers": "^5.8.0",
     "mongo": "^0.1.0",
@@ -21,7 +22,6 @@
     "react-dom": "^18.2.0",
     "react-router-dom": "^7.6.0",
     "vite": "^5.2.0",
-    "@vitejs/plugin-react": "^4.2.1",
     "vite-plugin-node-polyfills": "^0.23.0",
     "wagmi": "^1.4.13",
     "web-vitals": "^5.0.0"
