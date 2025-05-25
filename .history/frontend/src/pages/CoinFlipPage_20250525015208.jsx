@@ -30,7 +30,6 @@ const CoinFlipPage = () => {
     isConnecting,
     isConnected,
     activeWalletInstance, // Add this line to get access to the signer
-    connectionStatus
   } = useWallet();
 
   const [selectedSide, setSelectedSide] = useState(null);

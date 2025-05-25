@@ -53,18 +53,23 @@ export const WalletProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    if (isBrowser) {
-      console.log("WalletProvider Connection Debug:", {
-        address,
-        connectionStatus,
-        hasSigner: !!signer,
-        sdkIsConnecting,
-        isConnectActionLoading,
-        calculatedIsConnected
+    if (!isBrowser) return; // Skip this effect during SSR
+    
+    console.log("WalletProvider State Update:");
+    console.log("  - address (from useAddress):", address);
+    console.log("  - connectionStatus (from useConnectionStatus):", connectionStatus);
+    console.log("  - signer (from useSigner):", signer);
+    console.log("  - sdkIsConnecting (from useConnect):", sdkIsConnecting);
+    console.log("  - isConnectActionLoading (local state):", isConnectActionLoading);
+    console.log("  - overallIsConnecting (combined):", overallIsConnecting);
+    console.log("  - calculatedIsConnected (logic):", calculatedIsConnected);
+    if (signer) {
+      console.log("  - signer details:", {
+        provider: !!signer.provider,
+        // You can log other signer properties if needed
       });
     }
-  }, [address, connectionStatus, signer, sdkIsConnecting, isConnectActionLoading, calculatedIsConnected]);
-  
+  }, [address, connectionStatus, signer, sdkIsConnecting, isConnectActionLoading, overallIsConnecting, calculatedIsConnected]);
 
   const connectWallet = async () => {
     if (!isBrowser) return; // Skip during SSR
