@@ -26,9 +26,10 @@ function MarketCapProgress() {
 
     const milestones = [
         { label: "FLIPSKI", value: 100000, icon: milestone1Icon },
-        { label: "Challenges", value: 500000, icon: milestone2Icon },
-        { label: "??????", value: 10070000, icon: milestone1Icon },
-        { label: "FLIPSKI Evolved", value: 1800000, icon: milestone1Icon }
+        { label: "Challenges", value: 750000, icon: milestone2Icon },
+        { label: "$FLIPSKI BETS", value: 750000, icon: milestone2Icon },
+        { label: "Multi Spin", value: 1250000, icon: milestone1Icon },
+        { label: "FLIPSKI Evolved", value: 1800000, icon: milestone2Icon }
     ];
 
     return (
