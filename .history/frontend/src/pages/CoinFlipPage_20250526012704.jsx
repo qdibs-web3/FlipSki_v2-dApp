@@ -213,7 +213,7 @@ const CoinFlipPage = () => {
         }
       };
       fetchAndUpdateHistory();
-      const interval = setInterval(fetchAndUpdateHistory, 10000);
+      const interval = setInterval(fetchAndUpdateHistory, 15000);
       return () => clearInterval(interval);
     }
   }, [walletAddress, fetchGameHistory, isSubmittingTransaction]);

@@ -1,0 +1,21 @@
+// src/components/Navbar.js
+import React from 'react';
+import { ConnectButton } from "@thirdweb-dev/react"; // Import the ConnectWallet component
+import '../styles/Navbar.css';
+
+const Navbar = () => {
+  return (
+    <nav className="navbar">
+      <h1 className="logo" onClick={() => window.location.href = '/'}>FLIPSKI</h1>
+      <div className="wallet-section">
+        <ConnectButton
+          theme="dark" // You can choose "light" or "dark"
+          btnTitle="Connect Wallet"
+          modalSize="compact" // You can choose "compact" or "wide"
+        />
+      </div>
+    </nav>
+  );
+};
+
+export default Navbar;

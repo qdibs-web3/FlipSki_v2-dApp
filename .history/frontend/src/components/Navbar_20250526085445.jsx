@@ -17,8 +17,8 @@ const Navbar = () => {
         <button className="logo dropbtn">FLIPSKI</button>
         <div className="dropdown-content">
           <span onClick={() => handleNavigate('/')}>Home</span>
-          <span onClick={() => handleNavigate('/flipski-coin')}>$FLIPSKI</span>
-          <span onClick={() => handleNavigate('/flipski')}>Play FLIPSKI</span>
+          <span onClick={() => handleNavigate('/flipskicoin')}>$FLIPSKI</span>
+          <span onClick={() => handleNavigate('/coinflip')}>Play FLIPSKI</span>
         </div>
       </div>
 

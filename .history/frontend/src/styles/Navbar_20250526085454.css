@@ -20,7 +20,6 @@ body {
   background: linear-gradient(170deg, #fff, #0a599c, #0a599c);
   background-size: 600% 600%;
   animation: animatedBackground 10s ease infinite;
-  position: relative; /* ensures proper layout anchoring */
 }
 
 @keyframes animatedBackground {
@@ -73,10 +72,6 @@ body {
 .wallet-section {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  flex-grow: 1;
-  max-width: 200px;
-  margin-left: auto;
   transform: scale(0.85);
   transform-origin: right center;
 }
@@ -122,20 +117,15 @@ body {
   display: block;
 }
 
-/* Optional: force wallet button to stay aligned on mobile */
 @media (max-width: 600px) {
-  .navbar {
-    flex-direction: row;
-    flex-wrap: wrap;
-  }
-
-  .wallet-section {
-    width: 100%;
-    justify-content: flex-end;
-    margin-top: 8px;
-  }
-
   .logo {
     font-size: 36px;
+    margin-bottom: 10px;
+  }
+
+  .navbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
   }
 }

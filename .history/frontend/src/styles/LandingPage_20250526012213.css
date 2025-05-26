@@ -39,7 +39,7 @@ body {
   display: flex;
   justify-content: center;
   width: 100%;
-  margin-bottom: 2px;
+  margin-bottom: 10px;
 }
 
 .landing-gif {
