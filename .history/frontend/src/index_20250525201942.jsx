@@ -1,30 +1,27 @@
-// src/index.jsx - ALTERNATIVE SOLUTION
+// src/index.jsx - COMPLETE OVERHAUL
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { ThirdwebProvider } from "@thirdweb-dev/react";
-import { WalletProvider } from './context/WalletProvider';
+import { BaseSepoliaTestnet } from "@thirdweb-dev/chains";
 import { metamaskWallet } from "@thirdweb-dev/react";
-import { Base, BaseSepoliaTestnet } from "@thirdweb-dev/chains";
 import App from './App';
 import './styles/index.css';
 
-// Ensure client ID is properly accessed
+// Get client ID with fallback
 const clientId = import.meta.env.VITE_THIRDWEB_CLIENT_ID || "";
 
+// Create a simplified ThirdwebProvider setup
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <ThirdwebProvider 
       clientId={clientId}
       activeChain={BaseSepoliaTestnet}
       supportedWallets={[metamaskWallet()]}
-      autoConnect={true}
     >
-      <WalletProvider>
-        <Router>
-          <App />
-        </Router>
-      </WalletProvider>
+      <Router>
+        <App />
+      </Router>
     </ThirdwebProvider>
-  </React.StrictMode>,
+  </React.StrictMode>
 );

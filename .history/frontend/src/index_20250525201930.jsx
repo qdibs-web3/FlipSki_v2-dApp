@@ -18,7 +18,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       clientId={clientId}
       activeChain={BaseSepoliaTestnet}
       supportedWallets={[metamaskWallet()]}
-      autoConnect={true}
+      autoConnect={false}
     >
       <WalletProvider>
         <Router>

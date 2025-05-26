@@ -47,8 +47,8 @@ const LevelSystem = ({ walletAddress, gameResult }) => {
   useEffect(() => {
     if (!walletAddress || !gameResult || !gameResult.gameId) return;
     
-    // Skip if already processed locally - with defensive check for processedGameIds
-    if (Array.isArray(processedGameIds) && processedGameIds.includes(gameResult.gameId)) {
+    // Skip if already processed locally
+    if (processedGameIds.includes(gameResult.gameId)) {
       return;
     }
     
