@@ -70,8 +70,8 @@ const FlipskiCoinPage = () => {
             <h2 className="grid-item-title">Game Example</h2>
             <ul className="grid-item-list">
                 <li>Win: Wager (0.01 ETH) + Winnings (0.01 ETH) = 0.02 ETH total before fees.</li>
-                <li>Fee: 10% of the winnings (0.01 ETH) = 0.001 ETH.</li>
-                <li>Net payout: 0.02 ETH – 0.001 ETH = 0.0190 ETH.</li>
+                <li>Fee: 5% of the winnings (0.01 ETH) = 0.0005 ETH.</li>
+                <li>Net payout: 0.02 ETH – 0.0005 ETH = 0.0195 ETH.</li>
                 <li>Loss: 0 ETH returned.</li>
             </ul>           
             </div>
