@@ -83,7 +83,7 @@ function MarketCapProgress() {
                         />
                         <span className="slider round"></span>
                     </label>
-                    <span className="toggle-label">{showVRF ? "VRF Info" : "MC Goals"}</span>
+                    <span className="toggle-label">{showVRF ? "Show Goals" : "VRF Info"}</span>
                 </div>
             </div>
         </div>
