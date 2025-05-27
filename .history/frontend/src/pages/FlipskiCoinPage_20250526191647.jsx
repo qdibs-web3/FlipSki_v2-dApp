@@ -28,13 +28,13 @@ const FlipskiCoinPage = () => {
         <div className="title-row">
           <h1 className="main-container-title">BASE $FLIPSKI</h1>
           <div className="icon-buttons">
-            <a href="https://www.clanker.world/" target="_blank" rel="noopener noreferrer">
+            <a href="https://example1.com" target="_blank" rel="noopener noreferrer">
               <img src={clank} alt="Link 1" className="icon-button" />
             </a>
-            <a href="https://x.com/flipskionbase" target="_blank" rel="noopener noreferrer">
+            <a href="https://example1.com" target="_blank" rel="noopener noreferrer">
               <img src={X} alt="Link 2" className="icon-button" />
             </a>
-            <a href="https://x.com/flipskionbase" target="_blank" rel="noopener noreferrer">
+            <a href="https://example2.com" target="_blank" rel="noopener noreferrer">
               <img src={tg} alt="Link 3" className="icon-button" />
             </a>
           </div>

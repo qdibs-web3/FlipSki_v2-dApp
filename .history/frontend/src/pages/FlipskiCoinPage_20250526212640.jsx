@@ -34,7 +34,7 @@ const FlipskiCoinPage = () => {
             <a href="https://x.com/flipskionbase" target="_blank" rel="noopener noreferrer">
               <img src={X} alt="Link 2" className="icon-button" />
             </a>
-            <a href="https://x.com/flipskionbase" target="_blank" rel="noopener noreferrer">
+            <a href="https://example2.com" target="_blank" rel="noopener noreferrer">
               <img src={tg} alt="Link 3" className="icon-button" />
             </a>
           </div>
