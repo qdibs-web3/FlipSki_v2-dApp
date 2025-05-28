@@ -4,6 +4,7 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { ThirdwebProvider } from "@thirdweb-dev/react";
 import { WalletProvider } from './context/WalletProvider';
+import { metamaskWallet } from "@thirdweb-dev/react";
 import { Base, BaseSepoliaTestnet } from "@thirdweb-dev/chains";
 import App from './App';
 import './styles/index.css';
