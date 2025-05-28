@@ -68,6 +68,7 @@ router.get('/:walletAddress', async (req, res) => {
 });
 
 
+// Update user XP based on game result
 router.post('/:walletAddress/update-xp', async (req, res) => {
   try {
     const { walletAddress } = req.params;
@@ -77,48 +78,50 @@ router.post('/:walletAddress/update-xp', async (req, res) => {
       return res.status(400).json({ message: 'Game ID is required' });
     }
     
-    // First, check if the game is already processed for this user
-    const existingUser = await User.findOne({ 
-      walletAddress: walletAddress.toLowerCase(),
-      processedGameIds: gameId
-    });
+    // Find user or create if not exists
+    let user = await User.findOne({ walletAddress: walletAddress.toLowerCase() });
     
-    if (existingUser) {
-      return res.status(200).json({
-        message: 'Game already processed',
-        walletAddress: existingUser.walletAddress,
-        xp: existingUser.xp,
-        level: existingUser.level,
-        wins: existingUser.wins,
-        losses: existingUser.losses,
-        nextLevelXp: existingUser.level * 10,
-        processedGameIds: existingUser.processedGameIds
+    if (!user) {
+      user = new User({
+        walletAddress: walletAddress.toLowerCase(),
+        xp: 0,
+        level: 1,
+        wins: 0,
+        losses: 0,
+        processedGameIds: []
       });
     }
     
-    // Calculate XP to add and update counters
-    const xpToAdd = won ? 2 : 1;
+    // Check if game already processed
+    if (user.processedGameIds.includes(gameId)) {
+      return res.status(200).json({
+        message: 'Game already processed',
+        walletAddress: user.walletAddress,
+        xp: user.xp,
+        level: user.level,
+        wins: user.wins,
+        losses: user.losses,
+        nextLevelXp: user.level * 10,
+        processedGameIds: user.processedGameIds
+      });
+    }
     
-    // Use findOneAndUpdate to atomically update or create the user
-    const user = await User.findOneAndUpdate(
-      { walletAddress: walletAddress.toLowerCase() },
-      { 
-        $inc: { 
-          xp: xpToAdd,
-          wins: won ? 1 : 0,
-          losses: won ? 0 : 1
-        },
-        $push: { processedGameIds: gameId },
-        $setOnInsert: {
-          walletAddress: walletAddress.toLowerCase()
-        }
-      },
-      { 
-        new: true,
-        upsert: true,
-        runValidators: true
-      }
-    );
+    // Calculate XP to add
+    const xpToAdd = won ? 2 : 1;
+    user.xp += xpToAdd;
+    
+    // Update win/loss counters
+    if (won) {
+      user.wins += 1;
+    } else {
+      user.losses += 1;
+    }
+    
+    // Add game to processed list
+    user.processedGameIds.push(gameId);
+    
+    // Save user
+    await user.save();
     
     res.status(200).json({
       message: 'XP updated successfully',
