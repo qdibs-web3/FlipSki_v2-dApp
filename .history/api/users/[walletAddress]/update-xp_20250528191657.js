@@ -1,4 +1,3 @@
-// api/users/[walletAddress]/update-xp.js
 // Import required modules
 require('dotenv').config();
 const User = require('../../models/User');
@@ -57,96 +56,37 @@ module.exports = async (req, res) => {
       walletAddress: walletAddress.toLowerCase(),
       processedGameIds: gameId
     });
-    
+
     if (existingUser) {
       return res.status(200).json({
         message: 'Game already processed',
-        walletAddress: existingUser.walletAddress,
-        xp: existingUser.xp,
-        level: existingUser.level,
-        wins: existingUser.wins,
-        losses: existingUser.losses,
-        nextLevelXp: existingUser.level * 10,
-        processedGameIds: existingUser.processedGameIds
+        // ...response data with existingUser
       });
     }
-    
-    // Check if user exists first without modifying
-    const userExists = await User.findOne({ 
-      walletAddress: walletAddress.toLowerCase() 
-    });
-    
-    if (!userExists) {
-      // Create new user without incrementing XP
-      const newUser = await User.findOneAndUpdate(
-        { walletAddress: walletAddress.toLowerCase() },
-        { 
-          $setOnInsert: {
-            walletAddress: walletAddress.toLowerCase(),
-            xp: 0,
-            level: 1,
-            wins: 0,
-            losses: 0,
-            processedGameIds: []
-          }
-        },
-        { 
-          new: true,
-          upsert: true,
-          runValidators: true
-        }
-      );
-      
-      return res.status(200).json({
-        message: 'User created',
-        walletAddress: newUser.walletAddress,
-        xp: newUser.xp,
-        level: newUser.level,
-        wins: newUser.wins,
-        losses: newUser.losses,
-        nextLevelXp: newUser.level * 10,
-        processedGameIds: newUser.processedGameIds,
-        xpAdded: 0
-      });
-    }
-    
+
     // Calculate XP to add
     const xpToAdd = won ? 2 : 1;
-    
-    // Use findOneAndUpdate to atomically update the existing user
+
+    // Use findOneAndUpdate to atomically update or create the user
     const user = await User.findOneAndUpdate(
-      { 
-        walletAddress: walletAddress.toLowerCase(),
-        processedGameIds: { $ne: gameId } // Ensure game not already processed
-      },
+      { walletAddress: walletAddress.toLowerCase() },
       { 
         $inc: { 
           xp: xpToAdd,
           wins: won ? 1 : 0,
           losses: won ? 0 : 1
         },
-        $push: { processedGameIds: gameId }
+        $push: { processedGameIds: gameId },
+        $setOnInsert: {
+          walletAddress: walletAddress.toLowerCase()
+        }
       },
       { 
         new: true,
+        upsert: true,
         runValidators: true
       }
     );
-    
-    // If no update was made (game already processed), return the current user
-    if (!user) {
-      const currentUser = await User.findOne({ walletAddress: walletAddress.toLowerCase() });
-      return res.status(200).json({
-        message: 'Game already processed or user not found',
-        walletAddress: currentUser.walletAddress,
-        xp: currentUser.xp,
-        level: currentUser.level,
-        wins: currentUser.wins,
-        losses: currentUser.losses,
-        nextLevelXp: currentUser.level * 10,
-        processedGameIds: currentUser.processedGameIds
-      });
-    }
     
     return res.status(200).json({
       message: 'XP updated successfully',
