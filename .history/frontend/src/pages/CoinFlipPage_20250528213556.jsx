@@ -91,88 +91,6 @@ const CoinFlipPage = () => {
     }
   }, [walletAddress]);
   
-  // Add function to check and switch chains before transactions
-  const ensureCorrectChain = async () => {
-    if (!isBrowser || !window.ethereum) {
-      setError("Browser wallet not available");
-      return false;
-    }
-    
-    try {
-      // Get current chain ID from the wallet
-      const currentChainId = await window.ethereum.request({ method: 'eth_chainId' });
-      const currentChainIdDecimal = parseInt(currentChainId, 16);
-      
-      // Check if already on the correct chain
-      if (currentChainIdDecimal === baseSepoliaChain.id) {
-        return true;
-      }
-      
-      // Display error and prompt user to switch
-      setError(`Please switch to Base Sepolia network in your wallet. Current network: Chain ID ${currentChainIdDecimal}`);
-      
-      // Attempt to switch the chain programmatically
-      try {
-        await window.ethereum.request({
-          method: 'wallet_switchEthereumChain',
-          params: [{ chainId: `0x${baseSepoliaChain.id.toString(16)}` }],
-        });
-        
-        // Verify the switch was successful
-        const newChainId = await window.ethereum.request({ method: 'eth_chainId' });
-        const newChainIdDecimal = parseInt(newChainId, 16);
-        
-        if (newChainIdDecimal === baseSepoliaChain.id) {
-          setError(""); // Clear error message
-          return true;
-        } else {
-          setError(`Failed to switch to Base Sepolia. Please switch manually in your wallet.`);
-          return false;
-        }
-      } catch (switchError) {
-        // This error code indicates that the chain has not been added to MetaMask
-        if (switchError.code === 4902) {
-          try {
-            await window.ethereum.request({
-              method: 'wallet_addEthereumChain',
-              params: [
-                {
-                  chainId: `0x${baseSepoliaChain.id.toString(16)}`,
-                  chainName: baseSepoliaChain.name,
-                  nativeCurrency: baseSepoliaChain.nativeCurrency,
-                  rpcUrls: [baseSepoliaChain.rpcUrls.default.http[0]],
-                  blockExplorerUrls: [baseSepoliaChain.blockExplorers.default.url],
-                },
-              ],
-            });
-            
-            // Check if adding and switching was successful
-            const addedChainId = await window.ethereum.request({ method: 'eth_chainId' });
-            const addedChainIdDecimal = parseInt(addedChainId, 16);
-            
-            if (addedChainIdDecimal === baseSepoliaChain.id) {
-              setError(""); // Clear error message
-              return true;
-            } else {
-              setError(`Failed to add and switch to Base Sepolia. Please switch manually in your wallet.`);
-              return false;
-            }
-          } catch (addError) {
-            setError(`Failed to add Base Sepolia network: ${addError.message}. Please add and switch manually.`);
-            return false;
-          }
-        } else {
-          setError(`Failed to switch to Base Sepolia: ${switchError.message}. Please switch manually.`);
-          return false;
-        }
-      }
-    } catch (error) {
-      console.error("Error checking or switching chain:", error);
-      setError(`Error checking or switching chain: ${error.message}`);
-      return false;
-    }
-  };
-  
 
   const fetchEthBalance = useCallback(async () => {
     if (!isBrowser) return; // Skip during SSR
@@ -367,12 +285,6 @@ const CoinFlipPage = () => {
     if (!selectedSide) {
       setError("Select FLIP (HEADS) or SKI (TAILS).");
       return;
-    }
-
-    // Check and ensure correct chain before proceeding
-    const isOnCorrectChain = await ensureCorrectChain();
-    if (!isOnCorrectChain) {
-      return; // Stop if not on correct chain
     }
     
     // Add defensive checks for publicClient

@@ -368,12 +368,6 @@ const CoinFlipPage = () => {
       setError("Select FLIP (HEADS) or SKI (TAILS).");
       return;
     }
-
-    // Check and ensure correct chain before proceeding
-    const isOnCorrectChain = await ensureCorrectChain();
-    if (!isOnCorrectChain) {
-      return; // Stop if not on correct chain
-    }
     
     // Add defensive checks for publicClient
     if (!publicClient) {

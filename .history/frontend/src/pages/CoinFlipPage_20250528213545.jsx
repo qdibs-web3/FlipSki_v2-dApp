@@ -172,7 +172,6 @@ const CoinFlipPage = () => {
       return false;
     }
   };
-  
 
   const fetchEthBalance = useCallback(async () => {
     if (!isBrowser) return; // Skip during SSR
@@ -368,7 +367,7 @@ const CoinFlipPage = () => {
       setError("Select FLIP (HEADS) or SKI (TAILS).");
       return;
     }
-
+    
     // Check and ensure correct chain before proceeding
     const isOnCorrectChain = await ensureCorrectChain();
     if (!isOnCorrectChain) {
@@ -537,174 +536,215 @@ const CoinFlipPage = () => {
   let buttonText = "Degen Flip!";
   if (isConnecting) buttonText = "Connecting Wallet...";
   else if (isSubmittingTransaction) buttonText = "Confirming Request...";
-  else if (isFlipping) buttonText = "Flipping...Waiting on VRF";
+  else if (isFlipping) buttonText = "Flipping...Waiting for VRF";
 
-    // Track the last game result for XP updates
-  const [lastProcessedGame, setLastProcessedGame] = useState(null);
-
-  // Update lastProcessedGame when a new game result is available
-  useEffect(() => {
-    if (!isBrowser) return; // Skip during SSR
-    
-    if (gameHistory.length > 0 && (!lastProcessedGame || lastProcessedGame.gameId !== gameHistory[0].gameId)) {
-      setLastProcessedGame(gameHistory[0]);
-    }
-  }, [gameHistory]);
-
-  // If not in browser environment, return minimal content
-  if (!isBrowser) {
-    return <div className="coinflip-container">Loading...</div>;
-  }
-
-  useEffect(() => {
-    console.log("Wallet Connection Debug:", {
-      walletAddress,
-      isConnected,
-      signer: !!activeWalletInstance,
-      connectionStatus
-    });
-  }, [walletAddress, isConnected, activeWalletInstance, connectionStatus]);
-  
-
+  // Render the main game UI
   return (
-    <div className="coinflip-container">
-      <div className="coinflip-box">
-      {walletAddress && (
-        <LevelSystem walletAddress={walletAddress} gameResult={lastProcessedGame} />
-      )}
-
+    <div className="coin-flip-container">
+      <div className="game-section">
+        <div className="coin-section">
+          <div className="coin-container">
+            {!flipResult && !isFlipping && (
+              <img 
+                src={coinImage} 
+                alt="Coin" 
+                className={`coin ${isFlipping ? 'flipping' : ''}`} 
+              />
+            )}
+            
+            {isFlipping && (
+              <div className="flipping-animation">
+                <img 
+                  src={coinImage} 
+                  alt="Flipping Coin" 
+                  className="coin flipping" 
+                />
+              </div>
+            )}
+            
+            {flipResult && (
+              <div className={`result-container ${flipResult.outcome}`}>
+                <img 
+                  src={flipResult.side === "heads" ? headsImage : tailsImage} 
+                  alt={flipResult.side === "heads" ? "Heads" : "Tails"} 
+                  className="result-image" 
+                />
+                <div className="result-text">
+                  {flipResult.outcome === "win" && (
+                    <span className="win-text">WIN! +{flipResult.payout} ETH</span>
+                  )}
+                  {flipResult.outcome === "loss" && (
+                    <span className="loss-text">LOSS! -{flipResult.wagered} ETH</span>
+                  )}
+                  {flipResult.outcome === "error" && (
+                    <span className="error-text">ERROR!</span>
+                  )}
+                  {flipResult.outcome === "unknown" && (
+                    <span className="unknown-text">PENDING...</span>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+          
+          <div className="side-selection">
+            <button 
+              className={`side-button ${selectedSide === "heads" ? "selected" : ""}`}
+              onClick={() => setSelectedSide("heads")}
+              disabled={isFlipping || isSubmittingTransaction}
+            >
+              <img src={headsImage} alt="Heads" className="side-image" />
+              <span>FLIP</span>
+            </button>
+            <button 
+              className={`side-button ${selectedSide === "tails" ? "selected" : ""}`}
+              onClick={() => setSelectedSide("tails")}
+              disabled={isFlipping || isSubmittingTransaction}
+            >
+              <img src={tailsImage} alt="Tails" className="side-image" />
+              <span>SKI</span>
+            </button>
+          </div>
+        </div>
+        
+        <div className="game-controls">
+          <div className="wager-section">
+            <div className="wager-input-container">
+              <label htmlFor="wager-input">Wager (ETH):</label>
+              <input
+                id="wager-input"
+                type="number"
+                min="0.001"
+                step="0.001"
+                value={wager}
+                onChange={(e) => setWager(e.target.value)}
+                disabled={isFlipping || isSubmittingTransaction}
+                className="wager-input"
+              />
+            </div>
+            
+            <div className="preset-wagers">
+              {presetWagers.map((presetWager) => (
+                <button
+                  key={presetWager}
+                  onClick={() => setWager(presetWager)}
+                  disabled={isFlipping || isSubmittingTransaction}
+                  className={`preset-wager-button ${wager === presetWager ? "selected" : ""}`}
+                >
+                  {presetWager} ETH
+                </button>
+              ))}
+            </div>
+          </div>
+          
+          <div className="potential-earnings">
+            <span>Potential Win: {potentialEarningsValue} ETH</span>
+            <span className="balance">Balance: {parseFloat(ethBalance).toFixed(5)} ETH</span>
+          </div>
+          
+          <button
+            onClick={handleDegen}
+            disabled={!isConnected || isFlipping || isSubmittingTransaction || !selectedSide}
+            className="flip-button"
+          >
+            {buttonText}
+          </button>
+          
+          {error && <div className="error-message">{error}</div>}
+        </div>
+      </div>
+      
+      <div className="level-and-history">
         {walletAddress && (
-          <div className="wallet-info-active">
-            <p>Wallet : <span className="wallet-address">{walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}</span></p>
-            <p>Balance: <span className="balance-info">{parseFloat(ethBalance).toFixed(4)} ETH</span></p>
+          <div className="level-container">
+            <LevelSystem walletAddress={walletAddress} gameResult={flipResult && flipResult.outcome !== "unknown" ? {
+              gameId: currentFlipAttempt?.gameId || `manual-${Date.now()}`,
+              won: flipResult.outcome === "win"
+            } : null} />
           </div>
         )}
-
-        {userRelatedError && <p className="wallet-warning">Wallet Error: {userRelatedError.message}</p>}
-
-        <div className="coin-display-area">
-          {isFlipping ? (
-            <div className="coin-flipping-animation">
-              <img src={coinImage} alt="Flipping Coin" className="coin-image" />
-            </div>
-          ) : flipResult ? (
-            <div className="flip-result-display">
-              <img src={flipResult.side === "heads" ? headsImage : tailsImage} alt={flipResult.side} className="coin-image result-coin-image" />
-              {flipResult.outcome === "win" && <p className="win-message">You Won! Wagered: {flipResult.wagered} ETH, Payout: {flipResult.payout} ETH</p>}
-              {flipResult.outcome === "loss" && <p className="loss-message">You Lost. Wagered: {flipResult.wagered} ETH</p>}
-              {flipResult.outcome === "unknown" && <p className="unknown-message">Outcome Unknown. Wagered: {flipResult.wagered} ETH. Check console.</p>}
-              {flipResult.outcome === "error" && <p className="error-message-result">Flip Error. Wagered: {flipResult.wagered} ETH. Check console.</p>}
-            </div>
-          ) : (
-            <div className="coin-placeholder">Make your wager and FLIPSKI!</div>
-          )}
-        </div>
-
-        {error && <p className="error-message">{error}</p>}
-
-        <div className="controls-and-selection-display-area">
-          <div className="coinflip-controls">
-            <div className="side-selection">
-              <button className={selectedSide === "heads" ? "selected" : ""} onClick={() => setSelectedSide("heads")}>FLIP</button>
-              <button className={selectedSide === "tails" ? "selected" : ""} onClick={() => setSelectedSide("tails")}>SKI</button>
-            </div>
-            <div className="wager-input">
-              <input type="number" value={wager} onChange={(e) => setWager(e.target.value)} placeholder="Enter wager in ETH" step="0.001" min={presetWagers[0]} />
-              <div className="preset-wagers">
-                {presetWagers.map((amount) => (<button key={amount} onClick={() => setWager(amount)}>{amount} ETH</button>))}
+        
+        <div className="history-section">
+          <div className="history-header">
+            <button onClick={toggleHistory} className="toggle-history-button">
+              {showHistory ? "Hide History" : "Show History"}
+            </button>
+          </div>
+          
+          {showHistory && (
+            <div className="history-content">
+              <div className="history-tabs">
+                <button 
+                  className={`history-tab ${activeTab === "history" ? "active" : ""}`}
+                  onClick={() => handleTabChange("history")}
+                >
+                  Your History
+                </button>
+                <button 
+                  className={`history-tab ${activeTab === "leaderboard" ? "active" : ""}`}
+                  onClick={() => handleTabChange("leaderboard")}
+                >
+                  Leaderboard
+                </button>
               </div>
-            </div>
-            <button className="degen-button" onClick={handleDegen} disabled={!isConnected || isSubmittingTransaction || isFlipping || isConnecting}>
-              {buttonText}
-            </button>
-          </div>
-
-          <div className="selected-coin-display">
-            {selectedSide && (
-              <img src={selectedSide === "heads" ? headsImage : tailsImage} alt={`${selectedSide} choice`} className="selected-choice-image" />
-            )}
-            {!selectedSide && !isFlipping && !flipResult && (
-                 <div className="selected-choice-placeholder-text">Select: FLIP (H) or SKI (T)</div>
-            )}
-            <p className="preview-wager">Wager: {getSelectedSideText()} for {wager} ETH</p>
-            <p className="potential-earnings">Potential Payout: {potentialEarningsValue} ETH</p>
-          </div>
-        </div>
-
-        {/* User's requested JSX for game history with VRF link and corrected logic */}
-        <div className="game-history">
-          <div className="game-history-tabs">
-            <button 
-              onClick={() => handleTabChange("history")} 
-              className={`game-history-tab ${activeTab === "history" ? "active-tab" : ""}`}
-            >
-              Last 10 FLIPSKI Wagers
-            </button>
-            <button 
-              onClick={() => handleTabChange("leaderboard")} 
-              className={`game-history-tab ${activeTab === "leaderboard" ? "active-tab" : ""}`}
-            >
-              Leaderboards
-            </button>
-            <button onClick={toggleHistory} className="game-history-toggle">
-              {showHistory ? "\u25B2" : "\u25BC"} {/* Unicode for up/down triangles */}
-            </button>
-          </div>
-          
-          {showHistory && activeTab === "history" && gameHistory.length > 0 && (
-            <ul>
-              {gameHistory.map((game) => (
-                <li key={game.gameId} className={game.won ? "win-history" : "loss-history"}>
-                  Game #{game.gameId}: Result: {game.result} — {game.won ? `✅ Won ${game.payout} ETH` : `❌ Loss (Payout: ${game.payout} ETH)`}
-                  {game.fulfillmentTxHash && (
-                    <a href={`https://sepolia.basescan.org/tx/${game.fulfillmentTxHash}`} target="_blank" rel="noopener noreferrer" className="history-tx-link">
-                      (View VRF Tx)
-                    </a>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-          {showHistory && activeTab === "history" && gameHistory.length === 0 && (
-            <p>No wager history yet.</p>
-          )}
-          
-          {showHistory && activeTab === "leaderboard" && (
-            <div className="leaderboard-container">
-              <table className="leaderboard-table">
-                <thead>
-                  <tr>
-                    <th>User</th>
-                    <th>Level</th>
-                    <th>Total XP</th>
-                    <th>W's</th>
-                    <th>L's</th>
-                    <th>W/L Ratio</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {leaderboardData.length > 0 ? (
-                    leaderboardData.map((user, index) => (
-                      <tr key={index}>
-                        <td>{user.walletAddress.slice(0, 6)}...{user.walletAddress.slice(-4)}</td>
-                        <td>{user.level}</td>
-                        <td>{user.xp}</td>
-                        <td>{user.wins}</td>
-                        <td>{user.losses}</td>
-                        <td>{user.wlRatio}</td>
-                      </tr>
-                    ))
+              
+              {activeTab === "history" ? (
+                <div className="game-history">
+                  {gameHistory.length === 0 ? (
+                    <p className="no-history">No game history yet. Play a game!</p>
                   ) : (
-                    <tr>
-                      <td colSpan="6">No leaderboard data available</td>
-                    </tr>
+                    <table className="history-table">
+                      <thead>
+                        <tr>
+                          <th>Result</th>
+                          <th>Payout</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {gameHistory.map((game, index) => (
+                          <tr key={index} className={game.won ? "win-row" : "loss-row"}>
+                            <td>{game.result}</td>
+                            <td>{game.won ? `+${game.payout} ETH` : "0 ETH"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   )}
-                </tbody>
-              </table>
+                </div>
+              ) : (
+                <div className="leaderboard">
+                  {leaderboardData.length === 0 ? (
+                    <p className="no-leaderboard">Loading leaderboard data...</p>
+                  ) : (
+                    <table className="leaderboard-table">
+                      <thead>
+                        <tr>
+                          <th>Rank</th>
+                          <th>Address</th>
+                          <th>Level</th>
+                          <th>W/L</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {leaderboardData.slice(0, 10).map((user, index) => (
+                          <tr key={index}>
+                            <td>{index + 1}</td>
+                            <td className="address-cell">
+                              {user.walletAddress.substring(0, 6)}...
+                              {user.walletAddress.substring(user.walletAddress.length - 4)}
+                            </td>
+                            <td>{user.level}</td>
+                            <td>{user.wlRatio}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>
-
       </div>
     </div>
   );
