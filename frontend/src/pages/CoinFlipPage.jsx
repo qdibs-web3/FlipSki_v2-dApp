@@ -14,7 +14,7 @@ import {
   baseSepoliaChain,
 } from "../config";
 import FlipSkiBaseVRFABI from "../abis/FlipSkiBaseVRF.abi.json"; 
-import coinImage from "../assets/flipski1.gif";
+import coinImage from "../assets/flipski2.gif";
 import headsImage from "../assets/flip1.png";
 import tailsImage from "../assets/ski1.png";
 import "../styles/CoinFlipPage.css";
@@ -337,6 +337,8 @@ const CoinFlipPage = () => {
     }
   }, [gameHistory, currentFlipAttempt, fetchEthBalance, fetchLeaderboardData]);  
 
+  const [timedOutGameIds, setTimedOutGameIds] = useState([]);
+  // Modify your timeout handler
   useEffect(() => {
     if (!isBrowser) return; // Skip during SSR
     
@@ -344,16 +346,43 @@ const CoinFlipPage = () => {
     if (isFlipping && currentFlipAttempt) {
       timeoutId = setTimeout(() => {
         if (isFlipping) {
-          // console.log("MAIN_DISPLAY_DEBUG: Timeout reached for VRF fulfillment.");
-          setError("VRF result is taking a while. Check game history for updates.");
-          setFlipResult({ outcome: "unknown", side: "unknown", wagered: currentFlipAttempt.wagerInEth, payout: "0" });
-          setIsFlipping(false);
-          setCurrentFlipAttempt(null);
+          try {
+            // Wrap in try-catch to prevent any errors from breaking the UI
+            setError("VRF result is taking a while. Check game history for updates.");
+            setFlipResult({ outcome: "unknown", side: "unknown", wagered: currentFlipAttempt.wagerInEth, payout: "0" });
+            setIsFlipping(false);
+            
+            // Instead of nullifying currentFlipAttempt, track its ID
+            if (currentFlipAttempt.gameId) {
+              setTimedOutGameIds(prev => [...prev, currentFlipAttempt.gameId]);
+            }
+            setCurrentFlipAttempt(null);
+          } catch (err) {
+            console.error("Error handling VRF timeout:", err);
+          }
         }
       }, 90000);
     }
     return () => clearTimeout(timeoutId);
   }, [isFlipping, currentFlipAttempt]);
+
+  // Add this effect to check for completed timed-out games
+  useEffect(() => {
+    if (!isBrowser || !gameHistory.length || !timedOutGameIds.length) return;
+    
+    // Check if any timed-out games have completed
+    const completedTimedOutGame = gameHistory.find(game => 
+      timedOutGameIds.includes(game.gameId)
+    );
+    
+    if (completedTimedOutGame) {
+      // Update lastProcessedGame with this result
+      setLastProcessedGame(completedTimedOutGame);
+      
+      // Remove this game ID from the timed-out list
+      setTimedOutGameIds(prev => prev.filter(id => id !== completedTimedOutGame.gameId));
+    }
+  }, [gameHistory, timedOutGameIds]);
 
   const handleDegen = async () => {
     if (!isBrowser) return; // Skip during SSR
