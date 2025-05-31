@@ -14,7 +14,7 @@ import {
   baseSepoliaChain,
 } from "../config";
 import FlipSkiBaseVRFABI from "../abis/FlipSkiBaseVRF.abi.json"; 
-import coinImage from "../assets/flipski2.gif";
+import coinImage from "../assets/flipski3.gif";
 import headsImage from "../assets/flip1.png";
 import tailsImage from "../assets/ski1.png";
 import "../styles/CoinFlipPage.css";
