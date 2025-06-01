@@ -1,13 +1,22 @@
-// api/users/update-xp.js
+// api/users/[walletAddress]/update-xp.js
 // Import required modules
 require('dotenv').config();
-const User = require('../models/User');
-const { connectToDatabase, setCorsHeaders } = require('../db');
+const User = require('../../models/User');
+const { connectToDatabase, setCorsHeaders } = require('../../db');
 
 // Serverless function handler for updating user XP
 module.exports = async (req, res) => {
   // Set CORS headers
   setCorsHeaders(res);
+
+  // Add extensive logging for debugging
+  console.log('Update-XP API Request:', {
+    method: req.method,
+    url: req.url,
+    query: req.query,
+    body: req.body,
+    headers: req.headers
+  });
 
   // Handle OPTIONS request (preflight)
   if (req.method === 'OPTIONS') {
@@ -17,15 +26,21 @@ module.exports = async (req, res) => {
 
   // Only allow POST requests
   if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Method not allowed' });
+    return res.status(405).json({ 
+      message: 'Method not allowed for update-xp endpoint',
+      allowedMethods: ['POST'],
+      receivedMethod: req.method
+    });
   }
 
   try {
     // Connect to the database
     await connectToDatabase();
     
-    // Get wallet address from URL path
+    // Get wallet address from URL path parameter
     const walletAddress = req.query.walletAddress || '';
+    
+    console.log('Extracted wallet address:', walletAddress);
     
     if (!walletAddress) {
       return res.status(400).json({ message: 'Wallet address is required' });
@@ -132,16 +147,6 @@ module.exports = async (req, res) => {
         processedGameIds: currentUser.processedGameIds
       });
     }
-
-    // FIX: Manually recalculate and update the level based on XP
-    // This is needed because findOneAndUpdate doesn't trigger the pre('save') middleware
-    const updatedLevel = Math.min(Math.floor(user.xp / 10) + 1, 100);
-    
-    // Only update if level has changed
-    if (user.level !== updatedLevel) {
-      user.level = updatedLevel;
-      await user.save(); // This will trigger the pre('save') middleware but we've already set the level
-    }
     
     return res.status(200).json({
       message: 'XP updated successfully',
@@ -156,6 +161,10 @@ module.exports = async (req, res) => {
     });
   } catch (error) {
     console.error('Error updating XP:', error);
-    return res.status(500).json({ message: 'Server error', error: error.message });
+    return res.status(500).json({ 
+      message: 'Server error', 
+      error: error.message,
+      stack: error.stack
+    });
   }
 };
