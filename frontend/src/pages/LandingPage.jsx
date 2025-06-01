@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/LandingPage.css';
-import gif from "../assets/flipski3.gif";
+import gif from "../assets/flipski4.gif";
 
 const LandingPage = () => {
   const navigate = useNavigate();

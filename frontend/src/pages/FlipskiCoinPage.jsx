@@ -4,7 +4,7 @@ import Chad from '../components/Chad';
 import MarketCapProgress from '../components/MarketCapProgress';
 import X from "../assets/x.png";
 import tg from "../assets/tg.png";
-import gif from "../assets/flipski1.gif";
+import gif from "../assets/flipski4.gif";
 import clank from "../assets/clank.png";
 
 const FlipskiCoinPage = () => {

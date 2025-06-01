@@ -91,9 +91,8 @@
       top: 4px;
       left: 6px;
       margin: 2px auto;
-      padding: 6px 8px;
-      min-width: 0; /* Allow it to be narrower on very small screens */
-      width: calc(40% - 12px); /* Maintain 50% width on mobile */
+      padding: 4px 6px;
+      width: calc(25% - 12px); /* Now half as wide */
     }
     
     .level-header {
@@ -128,7 +127,7 @@
   @media (max-width: 375px) {
     .level-system {
       padding: 4px 6px;
-      width: calc(40% - 8px); /* Slightly adjusted calculation for very small screens */
+      width: calc(25% - 8px); /* Also adjusted for extra small screens */
     }
     
     .level-header {

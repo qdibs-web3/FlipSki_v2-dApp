@@ -198,8 +198,8 @@
   .grid1-button {
     justify-content: center;
     align-content: center;
-    margin: 0 auto; /* Centers the div horizontally */
-
+    margin: auto 20%; /* Centers the div horizontally */
+    width: 200px;
   }
   
   /* Responsive Styles */
@@ -233,7 +233,13 @@
 
     .copyable-address {
       font-size: 14px;
+    }
 
+    .grid1-button {
+      justify-content: center;
+      align-content: center;
+      margin: auto 25%; /* Centers the div horizontally */
+      width: 120px;
     }
   }
   

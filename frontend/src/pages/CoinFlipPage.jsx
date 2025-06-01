@@ -14,7 +14,7 @@ import {
   baseSepoliaChain,
 } from "../config";
 import FlipSkiBaseVRFABI from "../abis/FlipSkiBaseVRF.abi.json"; 
-import coinImage from "../assets/flipski3.gif";
+import coinImage from "../assets/flipski4.gif";
 import headsImage from "../assets/flip1.png";
 import tailsImage from "../assets/ski1.png";
 import "../styles/CoinFlipPage.css";
@@ -674,7 +674,7 @@ const CoinFlipPage = () => {
               <table className="leaderboard-table">
                 <thead>
                   <tr>
-                    <th>User</th>
+                    <th>Top Flippers</th>
                     <th>Level</th>
                     <th>Total XP</th>
                     <th>W's</th>

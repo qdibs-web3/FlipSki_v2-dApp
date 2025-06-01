@@ -64,8 +64,7 @@
   /* Responsive adjustments */
   @media (max-width: 600px) {
     .footer-content {
-      flex-direction: column;
-      gap: 10px;
+      gap: 40px;
     }
     
     .footer-spacer {
