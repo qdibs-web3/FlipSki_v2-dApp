@@ -1,7 +1,7 @@
 import { defineChain } from 'viem';
 
 // Base Chain Definition
-export const baseMainnet = defineChain({
+export const baseSepoliaChain = defineChain({
   id: 8453,
   name: 'Base',
   nativeCurrency: {
@@ -16,7 +16,7 @@ export const baseMainnet = defineChain({
   blockExplorers: {
     default: { name: 'Basescan', url: 'https://basescan.org/' },
   },
-  testnet: false,
+  testnet: true,
 });
 
 // Contract address on Base

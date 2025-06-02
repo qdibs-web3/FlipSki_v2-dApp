@@ -1,7 +1,7 @@
 import { defineChain } from 'viem';
 
 // Base Chain Definition
-export const baseMainnet = defineChain({
+export const baseSepoliaChain = defineChain({
   id: 8453,
   name: 'Base',
   nativeCurrency: {

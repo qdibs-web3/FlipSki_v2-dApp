@@ -1,7 +1,7 @@
 import { defineChain } from 'viem';
 
 // Base Chain Definition
-export const baseMainnet = defineChain({
+export const baseSepoliaChain = defineChain({
   id: 8453,
   name: 'Base',
   nativeCurrency: {
@@ -10,13 +10,13 @@ export const baseMainnet = defineChain({
     symbol: 'ETH',
   },
   rpcUrls: {
-    default: { http: ['https://mainnet.base.org/'] },
-    public: { http: ['https://mainnet.base.org/'] },
+    default: { http: ['https://mainnet.base.org'] },
+    public: { http: ['https://mainnet.base.org'] },
   },
   blockExplorers: {
-    default: { name: 'Basescan', url: 'https://basescan.org/' },
+    default: { name: 'Basescan', url: 'https://mainnet.base.org/' },
   },
-  testnet: false,
+  testnet: true,
 });
 
 // Contract address on Base

@@ -48,7 +48,7 @@ const CoinFlipPage = () => {
 
   const publicClient = useMemo(() => {
     return createPublicClient({
-      chain: baseMainnet,
+      chain: baseSepoliaChain,
       transport: http(),
     });
   }, []);
@@ -109,7 +109,7 @@ const CoinFlipPage = () => {
       }
       
       // Display error and prompt user to switch
-      setError(`Please switch to Base network in your wallet. Current network: Chain ID ${currentChainIdDecimal}`);
+      setError(`Please switch to Base Sepolia network in your wallet. Current network: Chain ID ${currentChainIdDecimal}`);
       
       // Attempt to switch the chain programmatically
       try {
@@ -126,7 +126,7 @@ const CoinFlipPage = () => {
           setError(""); // Clear error message
           return true;
         } else {
-          setError(`Failed to switch to Base. Please switch manually in your wallet.`);
+          setError(`Failed to switch to Base Sepolia. Please switch manually in your wallet.`);
           return false;
         }
       } catch (switchError) {
@@ -150,19 +150,19 @@ const CoinFlipPage = () => {
             const addedChainId = await window.ethereum.request({ method: 'eth_chainId' });
             const addedChainIdDecimal = parseInt(addedChainId, 16);
             
-            if (addedChainIdDecimal === baseMainnet.id) {
+            if (addedChainIdDecimal === baseSepoliaChain.id) {
               setError(""); // Clear error message
               return true;
             } else {
-              setError(`Failed to add and switch to Base. Please switch manually in your wallet.`);
+              setError(`Failed to add and switch to Base Sepolia. Please switch manually in your wallet.`);
               return false;
             }
           } catch (addError) {
-            setError(`Failed to add Base network: ${addError.message}. Please add and switch manually.`);
+            setError(`Failed to add Base Sepolia network: ${addError.message}. Please add and switch manually.`);
             return false;
           }
         } else {
-          setError(`Failed to switch to Base: ${switchError.message}. Please switch manually.`);
+          setError(`Failed to switch to Base Sepolia: ${switchError.message}. Please switch manually.`);
           return false;
         }
       }
