@@ -20,4 +20,4 @@ export const baseMainnet = defineChain({
 });
 
 // Contract address on Base
-export const COINFLIP_CONTRACT_ADDRESS = "0x1EC9aE124af51A3f45414Bb3259f8E9bE92afbfE"; 
+export const COINFLIP_CONTRACT_ADDRESS = "0xE32b25a366ab56357c014A44bf1Dd1140761bEdc"; 
