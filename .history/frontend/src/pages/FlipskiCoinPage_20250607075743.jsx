@@ -53,7 +53,7 @@ const FlipskiCoinPage = () => {
           <h2 className="grid-item-title">About $FLIPSKI</h2>
             <ul className="grid-item-list">
                 <li>Flipski is a degen-driven meme coin designed for fast flips and high vibes.</li>
-                <li>$FLIPSKI was released on clanker.world, a fair token launch platform.</li>
+                <li>$FLIPSKI will be released on clanker.world, a fair token launch platform.</li>
                 <li>Play FLIPSKI for fun, verifiably fair game play. The FLIPSKI game utilizes chainlinks VRF to make this verifiably fair functionality possible.</li>
                 <img src={gif} alt="Link 2" className="grid1-button" />
             </ul>
