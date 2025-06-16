@@ -12,7 +12,7 @@ const LandingPage = () => {
         <img src={gif} alt="Flipski" className="landing-gif" />
       </div>
 
-      <h1 className="landing-header">FLIPSKI</h1>
+      <h1 className="landing-header">FlipSki</h1>
       <button className="play-button" onClick={() => navigate('/flipski-coin')}>
         $FLIPSKI
       </button>
