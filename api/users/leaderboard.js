@@ -29,7 +29,18 @@ module.exports = async (req, res) => {
       .select('walletAddress xp level wins losses');
     
     const leaderboard = users.map(user => {
-      const wlRatio = user.wins > 0 ? (user.wins / (user.wins + user.losses)).toFixed(2) : '0.00';
+      let wlRatio;
+      if (user.losses === 0) {
+          // Handle cases with zero losses
+          if (user.wins > 0) {
+              wlRatio = 'Perfect'; // If wins > 0 and losses = 0, it's a perfect record
+          } else {
+              wlRatio = '0.00'; // If wins = 0 and losses = 0
+          }
+      } else {
+          // Calculate traditional Win/Loss Ratio
+          wlRatio = (user.wins / user.losses).toFixed(2);
+      }
       
       return {
         walletAddress: user.walletAddress,
@@ -37,7 +48,7 @@ module.exports = async (req, res) => {
         xp: user.xp,
         wins: user.wins,
         losses: user.losses,
-        wlRatio: wlRatio
+        wlRatio: wlRatio // This will now be the traditional W/L ratio or 'Perfect'/'0.00'
       };
     });
     
