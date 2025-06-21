@@ -824,7 +824,7 @@ const CoinFlipPage = () => {
             <div className="wallet-info-active">
               <p>Wallet : <span className="wallet-address">{walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}</span></p>
               <p>Base Eth: <span className="balance-info">{parseFloat(ethBalance).toFixed(4)}</span></p>
-              <p>$FlipSki: <span className="balance-info">{parseFloat(flipskiBalance).toFixed(0)}</span></p>
+              <p>$FlipSki : <span className="balance-info">{parseFloat(flipskiBalance).toFixed(0)}</span></p>
             </div>
           )}
 
