@@ -12,14 +12,13 @@ import {
   decodeEventLog,
 } from "viem";
 import {
-  COINFLIP_CONTRACT_ADDRESS,
-  COINFLIP_ERC20_CONTRACT_ADDRESS,
+  FLIPSKI_V2_CONTRACT_ADDRESS,
   FLIPSKI_TOKEN_ADDRESS,
   FLIPSKI_TOKEN_DECIMALS,
+  ETH_ADDRESS,
   baseMainnet,
 } from "../config";
-import FlipSkiBaseVRFABI from "../abis/FlipSkiBaseVRF.abi.json"; 
-import FlipSkiBaseVRFerc20ABI from "../abis/FlipSkiBaseVRFerc20.abi.json";
+import FlipSkiV2ABI from "../abis/FlipSkiV2.abi.json"; 
 import coinImage from "../assets/flipski4.gif";
 import headsImage from "../assets/flip2.png";
 import tailsImage from "../assets/ski2.png";
@@ -80,7 +79,8 @@ const CoinFlipPage = () => {
 
   const [selectedSide, setSelectedSide] = useState(null);
   const [wager, setWager] = useState("0.001");
-  const [wagerType, setWagerType] = useState("ETH"); // "ETH" or "FLIPSKI"
+  const [selectedToken, setSelectedToken] = useState(null); // V2: Selected token object
+  const [availableTokens, setAvailableTokens] = useState([]); // V2: Available tokens from contract
   const [isFlipping, setIsFlipping] = useState(false); 
   const [isSubmittingTransaction, setIsSubmittingTransaction] = useState(false); 
   const [flipResult, setFlipResult] = useState(null); 
@@ -96,14 +96,24 @@ const CoinFlipPage = () => {
   const [isApproving, setIsApproving] = useState(false);
   const [lastProcessedGame, setLastProcessedGame] = useState(null);
 
-  // Dynamic preset wagers based on wager type
+  // V2: Dynamic preset wagers based on selected token
   const presetWagers = useMemo(() => {
-    if (wagerType === "ETH") {
+    if (!selectedToken) return ["0.001", "0.005", "0.01"];
+    
+    if (selectedToken.address === ETH_ADDRESS) {
       return ["0.001", "0.005", "0.01"];
-    } else {
+    } else if (selectedToken.symbol === "FLIPSKI") {
       return ["1000000", "10000000", "100000000"]; // 1M, 10M, 100M FlipSki tokens
+    } else {
+      // For other tokens, use min wager as base
+      const minWager = parseFloat(selectedToken.minWagerFormatted);
+      return [
+        minWager.toString(),
+        (minWager * 10).toString(),
+        (minWager * 100).toString()
+      ];
     }
-  }, [wagerType]);
+  }, [selectedToken]);
 
   const publicClient = useMemo(() => {
     return createPublicClient({
@@ -111,21 +121,6 @@ const CoinFlipPage = () => {
       transport: http(),
     });
   }, []);
-
-  // Get current contract address and ABI based on wager type
-  const getCurrentContract = useCallback(() => {
-    if (wagerType === "ETH") {
-      return {
-        address: COINFLIP_CONTRACT_ADDRESS,
-        abi: FlipSkiBaseVRFABI.abi
-      };
-    } else {
-      return {
-        address: COINFLIP_ERC20_CONTRACT_ADDRESS,
-        abi: FlipSkiBaseVRFerc20ABI.abi
-      };
-    }
-  }, [wagerType]);
 
   const getWalletClient = useCallback(async () => {
     if (!isBrowser) {
@@ -237,6 +232,45 @@ const CoinFlipPage = () => {
     }
   };
 
+  // V2: Fetch available tokens from contract
+  const fetchAvailableTokens = useCallback(async () => {
+    if (!isBrowser || !publicClient) return;
+    
+    try {
+      const tokensData = await publicClient.readContract({
+        address: FLIPSKI_V2_CONTRACT_ADDRESS,
+        abi: FlipSkiV2ABI.abi,
+        functionName: "getActiveTokens",
+      });
+      
+      if (tokensData && tokensData[0] && tokensData[1]) {
+        const [addresses, configs] = tokensData;
+        const processedTokens = addresses.map((address, index) => ({
+          address,
+          ...configs[index],
+          minWagerFormatted: formatUnits(configs[index].minWager, configs[index].decimals),
+          maxWagerFormatted: formatUnits(configs[index].maxWager, configs[index].decimals),
+        })).filter(token => token.isActive && !token.isPaused);
+        
+        setAvailableTokens(processedTokens);
+        
+        // Set default token (ETH if available, otherwise first token)
+        if (processedTokens.length > 0 && !selectedToken) {
+          const ethToken = processedTokens.find(t => t.address === ETH_ADDRESS);
+          if (ethToken) {
+            setSelectedToken(ethToken);
+            setWager("0.001"); // Default ETH wager
+          } else {
+            setSelectedToken(processedTokens[0]);
+            setWager(processedTokens[0].minWagerFormatted);
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching available tokens:", err);
+    }
+  }, [publicClient, selectedToken]);
+
   const fetchEthBalance = useCallback(async () => {
     if (!isBrowser) return;
     
@@ -269,28 +303,29 @@ const CoinFlipPage = () => {
     }
   }, [walletAddress, publicClient]);
 
+  // V2: Check token approval for ERC20 tokens
   const checkTokenApproval = useCallback(async () => {
-    if (!isBrowser || wagerType === "ETH" || !walletAddress || !publicClient) return;
+    if (!isBrowser || !selectedToken || selectedToken.address === ETH_ADDRESS || !walletAddress || !publicClient) return;
     
     try {
-      const currentContract = getCurrentContract();
       const allowance = await publicClient.readContract({
-        address: FLIPSKI_TOKEN_ADDRESS,
+        address: selectedToken.address,
         abi: ERC20_ABI,
         functionName: "allowance",
-        args: [walletAddress, currentContract.address],
+        args: [walletAddress, FLIPSKI_V2_CONTRACT_ADDRESS],
       });
       
-      const wagerInWei = parseUnits(wager, FLIPSKI_TOKEN_DECIMALS);
+      const wagerInWei = parseUnits(wager, selectedToken.decimals);
       setNeedsApproval(allowance < wagerInWei);
     } catch (err) {
       console.error("Error checking token approval:", err);
       setNeedsApproval(true);
     }
-  }, [walletAddress, publicClient, wager, wagerType, getCurrentContract]);
+  }, [walletAddress, publicClient, wager, selectedToken]);
 
+  // V2: Handle token approval
   const handleApproveToken = async () => {
-    if (!isBrowser) return;
+    if (!isBrowser || !selectedToken || selectedToken.address === ETH_ADDRESS) return;
     
     setError("");
     setIsApproving(true);
@@ -302,14 +337,13 @@ const CoinFlipPage = () => {
       const isOnCorrectChain = await ensureCorrectChain();
       if (!isOnCorrectChain) return;
       
-      const currentContract = getCurrentContract();
-      const approvalAmount = parseUnits("1000000000", FLIPSKI_TOKEN_DECIMALS);
+      const approvalAmount = parseUnits("1000000000", selectedToken.decimals);
       
       const approveTxHash = await walletClient.writeContract({
-        address: FLIPSKI_TOKEN_ADDRESS,
+        address: selectedToken.address,
         abi: ERC20_ABI,
         functionName: "approve",
-        args: [currentContract.address, approvalAmount],
+        args: [FLIPSKI_V2_CONTRACT_ADDRESS, approvalAmount],
         account: walletClient.account,
       });
       
@@ -321,6 +355,16 @@ const CoinFlipPage = () => {
       setError(`Approval failed: ${err.message}`);
     } finally {
       setIsApproving(false);
+    }
+  };
+
+  // V2: Handle token selection change
+  const handleTokenChange = (tokenAddress) => {
+    const token = availableTokens.find(t => t.address === tokenAddress);
+    if (token) {
+      setSelectedToken(token);
+      setWager(token.minWagerFormatted); // Set to minimum wager for new token
+      setNeedsApproval(false); // Reset approval state
     }
   };
 
@@ -344,29 +388,24 @@ const CoinFlipPage = () => {
     }
   }, []);
 
-  // FIXED: Create separate fetch functions for each contract, but check the correct one based on currentFlipAttempt
-  const fetchGameHistoryForContract = useCallback(async (contractAddress, contractAbi, wagerTypeForHistory) => {
-    if (!isBrowser || !publicClient || !walletAddress) return [];
+  // V2: Fetch game history from unified contract
+  const fetchGameHistory = useCallback(async () => {
+    if (!isBrowser || !publicClient || !walletAddress) return;
     
     try {
-      if (!contractAbi) {
-        console.error("HISTORY_DEBUG: Contract ABI not available");
-        return [];
-      }
-      
-      const gameSettledEventAbi = contractAbi.find(
+      const gameSettledEventAbi = FlipSkiV2ABI.abi.find(
         (item) => item && item.name === "GameSettled" && item.type === "event"
       );
       
       if (!gameSettledEventAbi) {
         console.error("HISTORY_DEBUG: GameSettled event ABI not found.");
-        return [];
+        return;
       }
       
       let logs = [];
       try {
         logs = await publicClient.getLogs({
-          address: contractAddress,
+          address: FLIPSKI_V2_CONTRACT_ADDRESS,
           event: gameSettledEventAbi,
           args: { player: walletAddress },
           fromBlock: "earliest",
@@ -376,7 +415,7 @@ const CoinFlipPage = () => {
         console.error("Error fetching logs:", logsError);
         logs = [];
       }
-  
+
       const history = (logs || [])
         .filter(log => {
           return log && log.args && 
@@ -389,114 +428,93 @@ const CoinFlipPage = () => {
           const rawResult = log.args.result;
           const mappedResult = Number(rawResult) === 0 ? "Heads" : "Tails";
           const payoutAmount = log.args.payoutAmount;
-          const won = payoutAmount > 0n;
+          const won = log.args.playerWon;
+          const tokenAddress = log.args.tokenAddress;
           
-          // Format payout based on wager type
-          const formattedPayout = wagerTypeForHistory === "ETH" 
-            ? formatEther(payoutAmount)
-            : formatUnits(payoutAmount, FLIPSKI_TOKEN_DECIMALS);
+          // Find token info for formatting
+          const token = availableTokens.find(t => t.address === tokenAddress);
+          const isEth = tokenAddress === ETH_ADDRESS;
+          const decimals = token ? token.decimals : (isEth ? 18 : 18);
+          const symbol = token ? token.symbol : (isEth ? "ETH" : "TOKEN");
+          
+          const formattedPayout = formatUnits(payoutAmount, decimals);
           
           return {
             gameId: log.args.gameId.toString(),
-            result: mappedResult, 
-            payout: formattedPayout,
+            result: mappedResult,
             won: won,
+            payout: formattedPayout,
+            wagerType: symbol, // Use token symbol instead of hardcoded type
+            tokenAddress: tokenAddress,
             fulfillmentTxHash: log.transactionHash,
-            vrfRequestId: log.args.vrfRequestId ? log.args.vrfRequestId.toString() : null,
-            wagerType: wagerTypeForHistory,
-            contractAddress: contractAddress,
           };
-        });
-      
-      return history;
-    } catch (err) {
-      console.error("HISTORY_DEBUG: Error fetching game history:", err);
-      return [];
+        })
+        .sort((a, b) => parseInt(b.gameId) - parseInt(a.gameId));
+
+      setGameHistory(history);
+    } catch (error) {
+      console.error("Error fetching game history:", error);
     }
-  }, [publicClient, walletAddress]);
+  }, [publicClient, walletAddress, availableTokens]);
 
-  // FIXED: Fetch from current contract for display, but check specific contract for settlement
-  const fetchGameHistory = useCallback(async () => {
-    if (!isBrowser) return;
-    
-    const currentContract = getCurrentContract();
-    const history = await fetchGameHistoryForContract(currentContract.address, currentContract.abi, wagerType);
-    setGameHistory(history.slice(-10));
-  }, [getCurrentContract, wagerType, fetchGameHistoryForContract]);
-
-  // FIXED: Check for settlement in the specific contract where the game was submitted
+  // V2: Check for game settlement
   const checkForGameSettlement = useCallback(async () => {
-    if (!currentFlipAttempt || !currentFlipAttempt.gameId || !currentFlipAttempt.contractAddress) return;
-    
-    console.log(`SETTLEMENT_DEBUG: Checking for game ${currentFlipAttempt.gameId} in contract ${currentFlipAttempt.contractAddress}`);
-    
-    // Determine which ABI to use based on contract address
-    let contractAbi, wagerTypeForCheck;
-    if (currentFlipAttempt.contractAddress.toLowerCase() === COINFLIP_CONTRACT_ADDRESS.toLowerCase()) {
-      contractAbi = FlipSkiBaseVRFABI.abi;
-      wagerTypeForCheck = "ETH";
-    } else {
-      contractAbi = FlipSkiBaseVRFerc20ABI.abi;
-      wagerTypeForCheck = "FLIPSKI";
+    if (!currentFlipAttempt || !currentFlipAttempt.gameId || !publicClient) {
+      return false;
     }
-    
-    const history = await fetchGameHistoryForContract(currentFlipAttempt.contractAddress, contractAbi, wagerTypeForCheck);
-    
-    const settledGame = history.find(game => 
-      game && game.gameId && game.gameId === currentFlipAttempt.gameId
-    );
-    
-    if (settledGame) {
-      console.log(`SETTLEMENT_DEBUG: Found settled game:`, settledGame);
-      
-      const gameResultOutcome = settledGame.won ? "win" : "loss";
-      const actualSide = settledGame.result ? settledGame.result.toLowerCase() : "unknown"; 
-      
-      setFlipResult({
-        outcome: gameResultOutcome,
-        side: actualSide,
-        wagered: currentFlipAttempt.wagerInEth,
-        payout: settledGame.payout || "0",
-        wagerType: wagerTypeForCheck,
+
+    try {
+      const gameData = await publicClient.readContract({
+        address: FLIPSKI_V2_CONTRACT_ADDRESS,
+        abi: FlipSkiV2ABI.abi,
+        functionName: "getGame",
+        args: [BigInt(currentFlipAttempt.gameId)],
       });
+
+      if (gameData && gameData.settled) {
+        console.log(`SETTLEMENT_DEBUG: Game ${currentFlipAttempt.gameId} is settled:`, gameData);
+        
+        const won = gameData.payoutAmount > 0n;
+        const resultSide = Number(gameData.result) === 0 ? "heads" : "tails";
+        const token = availableTokens.find(t => t.address === gameData.tokenAddress);
+        const decimals = token ? token.decimals : (gameData.tokenAddress === ETH_ADDRESS ? 18 : 18);
+        const symbol = token ? token.symbol : (gameData.tokenAddress === ETH_ADDRESS ? "ETH" : "TOKEN");
+        
+        const formattedPayout = formatUnits(gameData.payoutAmount, decimals);
+        
+        setFlipResult({
+          outcome: won ? "win" : "loss",
+          side: resultSide,
+          wagered: currentFlipAttempt.wagerInEth,
+          payout: formattedPayout,
+          wagerType: symbol
+        });
+
+        setLastProcessedGame({
+          won: won,
+          wagerAmount: currentFlipAttempt.wagerInEth,
+          wagerType: symbol
+        });
+
+        setIsFlipping(false);
+        setCurrentFlipAttempt(null);
+        
+        // Refresh game history
+        setTimeout(() => {
+          fetchGameHistory();
+        }, 2000);
+
+        return true;
+      }
       
-      // Set game result for XP system
-      setLastProcessedGame(settledGame);
-      
-      setIsFlipping(false);
-      setCurrentFlipAttempt(null);
-      setError("");
-      
-      fetchEthBalance();
-      fetchFlipskiBalance();
-      fetchLeaderboardData();
-      
-      return true; // Found settlement
+      return false;
+    } catch (error) {
+      console.error(`SETTLEMENT_DEBUG: Error checking settlement for game ${currentFlipAttempt.gameId}:`, error);
+      return false;
     }
-    
-    return false; // No settlement found
-  }, [currentFlipAttempt, fetchGameHistoryForContract, fetchEthBalance, fetchFlipskiBalance, fetchLeaderboardData]);
+  }, [currentFlipAttempt, publicClient, availableTokens, fetchGameHistory]);
 
-  // Handle wager type change
-  const handleWagerTypeChange = (newType) => {
-    setWagerType(newType);
-    setWager(newType === "ETH" ? "0.001" : "1000000");
-    setError("");
-    setFlipResult(null);
-  };
-
-  // Update button text based on state
-  const buttonText = useMemo(() => {
-    if (!isConnected) return "Connect Wallet";
-    if (isConnecting) return "Connecting...";
-    if (isApproving) return "Approving...";
-    if (needsApproval && wagerType === "FLIPSKI") return "Approve FlipSki";
-    if (isSubmittingTransaction) return "Confirming Request...";
-    if (isFlipping) return "Flipping...Waiting on VRF";
-    return "Degen Flip!";
-  }, [isConnected, isConnecting, isApproving, needsApproval, wagerType, isSubmittingTransaction, isFlipping]);
-
-  // Calculate potential earnings
+  // V2: Calculate potential earnings
   const potentialEarningsValue = useMemo(() => {
     if (!wager || isNaN(parseFloat(wager)) || parseFloat(wager) <= 0) return "0.00000";
     const wagerFloat = parseFloat(wager);
@@ -504,8 +522,18 @@ const CoinFlipPage = () => {
     const feeAmount = wagerFloat * feePercentage;
     const grossPayout = wagerFloat * 2;
     const netPayoutIfWin = grossPayout - feeAmount;
-    return wagerType === "ETH" ? netPayoutIfWin.toFixed(5) : netPayoutIfWin.toFixed(0);
-  }, [wager, wagerType]);
+    
+    if (!selectedToken) return netPayoutIfWin.toFixed(5);
+    
+    // Format based on token decimals
+    if (selectedToken.address === ETH_ADDRESS) {
+      return netPayoutIfWin.toFixed(5);
+    } else if (selectedToken.symbol === "FLIPSKI") {
+      return netPayoutIfWin.toFixed(0);
+    } else {
+      return netPayoutIfWin.toFixed(2);
+    }
+  }, [wager, selectedToken]);
 
   const getSelectedSideText = () => {
     if (selectedSide === "heads") return "FLIP";
@@ -524,27 +552,199 @@ const CoinFlipPage = () => {
     setShowHistory(!showHistory);
   };
 
+  // V2: Updated button text logic
+  const buttonText = useMemo(() => {
+    if (!isConnected) return "Connect Wallet";
+    if (isConnecting) return "Connecting...";
+    if (!selectedToken) return "Loading Tokens...";
+    if (selectedToken.address !== ETH_ADDRESS && needsApproval) return `Approve ${selectedToken.symbol}`;
+    if (isApproving) return "Approving...";
+    if (isSubmittingTransaction) return "Submitting...";
+    if (isFlipping) return "Flipping...";
+    if (!selectedSide) return "Select FLIP or SKI";
+    if (!wager || parseFloat(wager) <= 0) return "Enter Wager Amount";
+    
+    // Check wager limits
+    if (selectedToken) {
+      const wagerAmount = parseFloat(wager);
+      const minWager = parseFloat(selectedToken.minWagerFormatted);
+      const maxWager = parseFloat(selectedToken.maxWagerFormatted);
+      
+      if (wagerAmount < minWager) return `Min: ${selectedToken.minWagerFormatted} ${selectedToken.symbol}`;
+      if (wagerAmount > maxWager) return `Max: ${selectedToken.maxWagerFormatted} ${selectedToken.symbol}`;
+    }
+    
+    return `FLIPSKI for ${wager} ${selectedToken.symbol}`;
+  }, [isConnected, isConnecting, selectedToken, needsApproval, isApproving, isSubmittingTransaction, isFlipping, selectedSide, wager]);
+
+  // V2: Updated degen handler
+  const handleDegen = async () => {
+    if (!selectedToken || !selectedSide || !wager) {
+      setError("Please select a token, side, and enter wager amount");
+      return;
+    }
+
+    // Check if approval is needed for ERC20 tokens
+    if (selectedToken.address !== ETH_ADDRESS && needsApproval) {
+      await handleApproveToken();
+      return;
+    }
+
+    setError("");
+    setFlipResult(null);
+    setIsSubmittingTransaction(true);
+
+    try {
+      const walletClient = await getWalletClient();
+      if (!walletClient) return;
+
+      const isOnCorrectChain = await ensureCorrectChain();
+      if (!isOnCorrectChain) return;
+
+      const choiceAsNumber = selectedSide === "heads" ? 0 : 1;
+      const currentWagerForFlip = wager;
+
+      let contractCallParams;
+      
+      if (selectedToken.address === ETH_ADDRESS) {
+        // ETH game
+        const wagerInWei = parseEther(currentWagerForFlip);
+        contractCallParams = {
+          address: FLIPSKI_V2_CONTRACT_ADDRESS,
+          abi: FlipSkiV2ABI.abi,
+          functionName: "flipCoin",
+          args: [choiceAsNumber, ETH_ADDRESS, wagerInWei],
+          value: wagerInWei,
+          account: walletClient.account,
+        };
+      } else {
+        // ERC20 game
+        const wagerInWei = parseUnits(currentWagerForFlip, selectedToken.decimals);
+        contractCallParams = {
+          address: FLIPSKI_V2_CONTRACT_ADDRESS,
+          abi: FlipSkiV2ABI.abi,
+          functionName: "flipCoin",
+          args: [choiceAsNumber, selectedToken.address, wagerInWei],
+          account: walletClient.account,
+        };
+      }
+      
+      const flipTxHash = await walletClient.writeContract(contractCallParams);
+      const requestReceipt = await publicClient.waitForTransactionReceipt({ hash: flipTxHash });
+      setIsSubmittingTransaction(false);
+
+      // Parse GameRequested event
+      let parsedGameRequested = null;
+      
+      const gameRequestedEventAbi = FlipSkiV2ABI.abi.find(
+        (item) => item && item.name === "GameRequested" && item.type === "event"
+      );
+      
+      if (!gameRequestedEventAbi) {
+        console.error("REQUEST_DEBUG: GameRequested event ABI not found");
+        setError("Error processing transaction. Check game history for updates.");
+        return;
+      }
+      
+      for (const i in requestReceipt.logs) {
+        const log = requestReceipt.logs[i];
+        if (!log || !log.address || !FLIPSKI_V2_CONTRACT_ADDRESS) continue;
+        
+        if (log.address.toLowerCase() !== FLIPSKI_V2_CONTRACT_ADDRESS.toLowerCase()) {
+            continue;
+        }
+        try {
+          if (!log.data || !log.topics || !Array.isArray(log.topics)) continue;
+          
+          const decodedLog = decodeEventLog({ 
+            abi: FlipSkiV2ABI.abi, 
+            data: log.data, 
+            topics: log.topics 
+          });
+          
+          if (decodedLog && decodedLog.eventName === "GameRequested") {
+            if (decodedLog.args && 
+                decodedLog.args.player && 
+                decodedLog.args.gameId !== undefined && 
+                decodedLog.args.wagerAmount !== undefined && 
+                decodedLog.args.choice !== undefined) {
+              if (decodedLog.args.player.toLowerCase() === walletAddress.toLowerCase()) {
+                const formattedWager = formatUnits(decodedLog.args.wagerAmount, selectedToken.decimals);
+                
+                parsedGameRequested = {
+                  gameId: decodedLog.args.gameId.toString(),
+                  wagerInEth: formattedWager,
+                  choiceAsNumber: Number(decodedLog.args.choice),
+                  contractAddress: FLIPSKI_V2_CONTRACT_ADDRESS,
+                  wagerType: selectedToken.symbol,
+                };
+                break; 
+              }
+            }
+          }
+        } catch (e) {
+          console.error(`REQUEST_DEBUG: Error decoding log at index ${i}:`, e);
+        }
+      }
+
+      if (parsedGameRequested) {
+        console.log(`REQUEST_DEBUG: Game requested:`, parsedGameRequested);
+        setCurrentFlipAttempt(parsedGameRequested);
+        setIsFlipping(true);
+        setError("");
+      } else {
+        setError("Flip sent. Result will appear in history. Could not link for main display.");
+        setFlipResult({ 
+          outcome: "unknown", 
+          side: "unknown", 
+          wagered: currentWagerForFlip, 
+          payout: "0", 
+          wagerType: selectedToken.symbol 
+        });
+      }
+
+    } catch (err) {
+      console.error("Error during flip transaction:", err);
+      setError(err.shortMessage || err.message || "Flip transaction failed.");
+      setFlipResult({ 
+        outcome: "error", 
+        side: "unknown", 
+        wagered: wager, 
+        payout: "0", 
+        wagerType: selectedToken ? selectedToken.symbol : "TOKEN" 
+      });
+      setIsSubmittingTransaction(false);
+    } finally {
+      if (walletAddress) {
+        fetchEthBalance();
+        fetchFlipskiBalance();
+      }
+    }
+  };
+
+  // Effects
   useEffect(() => {
     if (!isBrowser) return;
     
     if (walletAddress) {
       fetchEthBalance();
       fetchFlipskiBalance();
+      fetchAvailableTokens(); // V2: Fetch available tokens
     }
-  }, [walletAddress, fetchEthBalance, fetchFlipskiBalance]);
+  }, [walletAddress, fetchEthBalance, fetchFlipskiBalance, fetchAvailableTokens]);
 
   useEffect(() => {
     if (!isBrowser) return;
     
-    if (wagerType === "FLIPSKI") {
+    if (selectedToken && selectedToken.address !== ETH_ADDRESS) {
       checkTokenApproval();
     }
-  }, [wager, wagerType, checkTokenApproval]);
+  }, [wager, selectedToken, checkTokenApproval]);
 
   useEffect(() => {
     if (!isBrowser) return;
     
-    if (walletAddress) {
+    if (walletAddress && availableTokens.length > 0) {
       const fetchAndUpdateHistory = () => {
         if (!isSubmittingTransaction) {
           fetchGameHistory();
@@ -554,7 +754,7 @@ const CoinFlipPage = () => {
       const interval = setInterval(fetchAndUpdateHistory, 10000);
       return () => clearInterval(interval);
     }
-  }, [walletAddress, fetchGameHistory, isSubmittingTransaction]);
+  }, [walletAddress, fetchGameHistory, isSubmittingTransaction, availableTokens]);
   
   useEffect(() => {
     if (!isBrowser) return;
@@ -564,7 +764,6 @@ const CoinFlipPage = () => {
     return () => clearInterval(interval);
   }, [fetchLeaderboardData]);
 
-  // FIXED: Use dedicated settlement checking instead of relying on gameHistory
   useEffect(() => {
     if (!isBrowser) return;
     
@@ -576,10 +775,7 @@ const CoinFlipPage = () => {
         }
       };
       
-      // Check immediately
       checkSettlement();
-      
-      // Then check every 5 seconds
       const interval = setInterval(checkSettlement, 5000);
       return () => clearInterval(interval);
     }
@@ -598,214 +794,21 @@ const CoinFlipPage = () => {
             outcome: "unknown", 
             side: "unknown", 
             wagered: currentFlipAttempt.wagerInEth, 
-            payout: "0",
-            wagerType: currentFlipAttempt.wagerType || wagerType
+            payout: "0", 
+            wagerType: currentFlipAttempt.wagerType 
           });
           setIsFlipping(false);
           setCurrentFlipAttempt(null);
         }
-      }, 90000);
-    }
-    return () => clearTimeout(timeoutId);
-  }, [isFlipping, currentFlipAttempt, wagerType]);
-
-  const handleDegen = async () => {
-    if (!isBrowser) return;
-    
-    setError("");
-    setFlipResult(null);
-    
-    if (!isConnected) {
-      setError("Connect wallet first.");
-      return;
+      }, 120000);
     }
     
-    if (!selectedSide) {
-      setError("Select FLIP (HEADS) or SKI (TAILS).");
-      return;
-    }
-
-    // Check if approval is needed for ERC20
-    if (wagerType === "FLIPSKI" && needsApproval) {
-      await handleApproveToken();
-      return;
-    }
-
-    const isOnCorrectChain = await ensureCorrectChain();
-    if (!isOnCorrectChain) {
-      return;
-    }
-    
-    if (!publicClient) {
-      setError("Client not initialized. Please refresh the page.");
-      return;
-    }
-    
-    const currentContract = getCurrentContract();
-    
-    let minWager, maxWager;
-    try {
-      if (!currentContract.abi) {
-        setError("Contract ABI not available. Please refresh the page.");
-        return;
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
       }
-      
-      const minWagerRaw = await publicClient.readContract({ 
-        address: currentContract.address, 
-        abi: currentContract.abi, 
-        functionName: "minWager" 
-      });
-      const maxWagerRaw = await publicClient.readContract({ 
-        address: currentContract.address, 
-        abi: currentContract.abi, 
-        functionName: "maxWager" 
-      });
-      
-      if (wagerType === "ETH") {
-        minWager = formatEther(minWagerRaw);
-        maxWager = formatEther(maxWagerRaw);
-      } else {
-        minWager = formatUnits(minWagerRaw, FLIPSKI_TOKEN_DECIMALS);
-        maxWager = formatUnits(maxWagerRaw, FLIPSKI_TOKEN_DECIMALS);
-      }
-    } catch (e) {
-      console.error("Could not fetch wager limits", e);
-      setError("Wager limits unavailable. Using defaults.");
-      if (wagerType === "ETH") {
-        minWager = "0.001";
-        maxWager = "0.1";
-      } else {
-        minWager = "1000000";
-        maxWager = "1000000000";
-      }
-    }
-    
-    if (!wager || parseFloat(wager) < parseFloat(minWager) || parseFloat(wager) > parseFloat(maxWager)) {
-      setError(`Wager must be between ${minWager} and ${maxWager} ${wagerType}.`);
-      return;
-    }
-    
-    const walletClient = await getWalletClient();
-    if (!walletClient) return;
-
-    setIsSubmittingTransaction(true);
-    const currentWagerForFlip = wager;
-    const choiceAsNumber = selectedSide === "heads" ? 0 : 1; 
-
-    try {
-      let contractCallParams;
-      
-      if (wagerType === "ETH") {
-        const wagerInWei = parseEther(currentWagerForFlip);
-        contractCallParams = {
-          address: currentContract.address,
-          abi: currentContract.abi,
-          functionName: "flip",
-          args: [choiceAsNumber],
-          value: wagerInWei,
-          account: walletClient.account,
-        };
-      } else {
-        const wagerInWei = parseUnits(currentWagerForFlip, FLIPSKI_TOKEN_DECIMALS);
-        contractCallParams = {
-          address: currentContract.address,
-          abi: currentContract.abi,
-          functionName: "flip",
-          args: [choiceAsNumber, wagerInWei],
-          account: walletClient.account,
-        };
-      }
-      
-      const flipTxHash = await walletClient.writeContract(contractCallParams);
-      const requestReceipt = await publicClient.waitForTransactionReceipt({ hash: flipTxHash });
-      setIsSubmittingTransaction(false);
-
-      // FIXED: Use the exact same parsing logic as the working version
-      let parsedGameRequested = null;
-      
-      if (!currentContract.abi) {
-        console.error("REQUEST_DEBUG: Contract ABI not available");
-        setError("Error processing transaction. Check game history for updates.");
-        return;
-      }
-      
-      const gameRequestedEventAbi = currentContract.abi.find(
-        (item) => item && item.name === "GameRequested" && item.type === "event"
-      );
-      
-      if (!gameRequestedEventAbi) {
-        console.error("REQUEST_DEBUG: GameRequested event ABI not found");
-        setError("Error processing transaction. Check game history for updates.");
-        return;
-      }
-      
-      // Use the exact same log parsing logic as the working version
-      for (const i in requestReceipt.logs) {
-        const log = requestReceipt.logs[i];
-        if (!log || !log.address || !currentContract.address) continue;
-        
-        if (log.address.toLowerCase() !== currentContract.address.toLowerCase()) {
-            continue;
-        }
-        try {
-          if (!log.data || !log.topics || !Array.isArray(log.topics)) continue;
-          
-          const decodedLog = decodeEventLog({ 
-            abi: currentContract.abi, 
-            data: log.data, 
-            topics: log.topics 
-          });
-          
-          if (decodedLog && decodedLog.eventName === "GameRequested") {
-            if (decodedLog.args && 
-                decodedLog.args.player && 
-                decodedLog.args.gameId !== undefined && 
-                decodedLog.args.wagerAmount !== undefined && 
-                decodedLog.args.choice !== undefined) {
-              if (decodedLog.args.player.toLowerCase() === walletAddress.toLowerCase()) {
-                // FIXED: Use the exact same structure as the working version
-                const formattedWager = wagerType === "ETH" 
-                  ? formatEther(decodedLog.args.wagerAmount)
-                  : formatUnits(decodedLog.args.wagerAmount, FLIPSKI_TOKEN_DECIMALS);
-                
-                parsedGameRequested = {
-                  gameId: decodedLog.args.gameId.toString(),
-                  wagerInEth: formattedWager, // Keep the same property name as working version
-                  choiceAsNumber: Number(decodedLog.args.choice),
-                  contractAddress: currentContract.address, // Add contract address for settlement checking
-                  wagerType: wagerType, // Add wager type for display
-                };
-                break; 
-              }
-            }
-          }
-        } catch (e) {
-          console.error(`REQUEST_DEBUG: Error decoding log at index ${i}:`, e);
-        }
-      }
-
-      if (parsedGameRequested) {
-        console.log(`REQUEST_DEBUG: Game requested:`, parsedGameRequested);
-        setCurrentFlipAttempt(parsedGameRequested);
-        setIsFlipping(true);
-        setError("");
-      } else {
-        setError("Flip sent. Result will appear in history. Could not link for main display.");
-        setFlipResult({ outcome: "unknown", side: "unknown", wagered: currentWagerForFlip, payout: "0", wagerType: wagerType });
-      }
-
-    } catch (err) {
-      console.error("Error during flip transaction:", err);
-      setError(err.shortMessage || err.message || "Flip transaction failed.");
-      setFlipResult({ outcome: "error", side: "unknown", wagered: currentWagerForFlip, payout: "0", wagerType: wagerType });
-      setIsSubmittingTransaction(false);
-    } finally {
-      if (walletAddress) {
-        fetchEthBalance();
-        fetchFlipskiBalance();
-      }
-    }
-  };
+    };
+  }, [isFlipping, currentFlipAttempt]);
 
   // If not in browser environment, return minimal content
   if (!isBrowser) {
@@ -852,26 +855,25 @@ const CoinFlipPage = () => {
 
           <div className="controls-and-selection-display-area">
             <div className="coinflip-controls">
-              {/* UPDATED: Wager Type control */}
+              {/* V2: Token Selection control */}
               <div className="wager-type-control">
-                <label className="control-label">Wager Type:</label>
-                <div className="compact-wager-buttons">
-                  <button 
-                    className={wagerType === "ETH" ? "selected" : ""} 
-                    onClick={() => handleWagerTypeChange("ETH")}
+                <label className="control-label">Select Token:</label>
+                <div className="token-selector-dropdown">
+                  <select 
+                    value={selectedToken?.address || ''} 
+                    onChange={(e) => handleTokenChange(e.target.value)}
+                    className="token-select"
                   >
-                    $ETH
-                  </button>
-                  <button 
-                    className={wagerType === "FLIPSKI" ? "selected" : ""} 
-                    onClick={() => handleWagerTypeChange("FLIPSKI")}
-                  >
-                    $FLIPSKI
-                  </button>
+                    {availableTokens.map((token) => (
+                      <option key={token.address} value={token.address}>
+                        {token.symbol} - {token.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
-              {/* UPDATED: Side Selection control */}
+              {/* Side Selection control */}
               <div className="side-selection-control">
                 <label className="control-label">Flip or Ski:</label>
                 <div className="side-selection-buttons">
@@ -879,27 +881,35 @@ const CoinFlipPage = () => {
                   <button className={selectedSide === "tails" ? "selected" : ""} onClick={() => setSelectedSide("tails")}>SKI</button>
                 </div>
               </div>
+              
               <div className="wager-input">
                 <input 
                   type="number" 
                   value={wager} 
                   onChange={(e) => setWager(e.target.value)} 
-                  placeholder={`Enter wager in ${wagerType}`} 
-                  step={wagerType === "ETH" ? "0.001" : "1000000"} 
-                  min={presetWagers[0]} 
+                  placeholder={selectedToken ? `Enter wager in ${selectedToken.symbol}` : 'Loading...'} 
+                  step={selectedToken?.address === ETH_ADDRESS ? "0.001" : "1000000"} 
+                  min={selectedToken?.minWagerFormatted || "0"} 
+                  max={selectedToken?.maxWagerFormatted || "999999999"}
                 />
                 <div className="preset-wagers">
                   {presetWagers.map((amount) => (
                     <button key={amount} onClick={() => setWager(amount)}>
-                      {wagerType === "ETH" ? amount : `${(parseFloat(amount) / 1000000).toFixed(0)}M`} {wagerType === "ETH" ? "ETH" : "FLIPSKI"}
+                      {selectedToken?.address === ETH_ADDRESS 
+                        ? `${amount} ETH`
+                        : selectedToken?.symbol === "FLIPSKI"
+                        ? `${(parseFloat(amount) / 1000000).toFixed(0)}M ${selectedToken.symbol}`
+                        : `${amount} ${selectedToken?.symbol || 'TOKEN'}`
+                      }
                     </button>
                   ))}
                 </div>
               </div>
+              
               <button 
                 className="degen-button" 
                 onClick={handleDegen} 
-                disabled={!isConnected || isSubmittingTransaction || isFlipping || isConnecting || isApproving}
+                disabled={!isConnected || isSubmittingTransaction || isFlipping || isConnecting || isApproving || !selectedToken}
               >
                 {buttonText}
               </button>
@@ -912,8 +922,13 @@ const CoinFlipPage = () => {
               {!selectedSide && !isFlipping && !flipResult && (
                    <div className="selected-choice-placeholder-text">Select: FLIP (H) or SKI (T)</div>
               )}
-              <p className="preview-wager">Wager: {getSelectedSideText()} for {wager} {wagerType}</p>
-              <p className="potential-earnings">Potential Payout: {potentialEarningsValue} {wagerType}</p>
+              {/* V2: Dynamic wager text */}
+              <p className="preview-wager">
+                Wager: {getSelectedSideText()} for {wager} {selectedToken?.symbol || 'TOKEN'}
+              </p>
+              <p className="potential-earnings">
+                Potential Payout: {potentialEarningsValue} {selectedToken?.symbol || 'TOKEN'}
+              </p>
             </div>
           </div>
 
@@ -923,7 +938,7 @@ const CoinFlipPage = () => {
                 onClick={() => handleTabChange("history")} 
                 className={`game-history-tab ${activeTab === "history" ? "active-tab" : ""}`}
               >
-                Last 10 FLIPSKI Wagers ({wagerType})
+                Last 10 FLIPSKI Wagers ({selectedToken?.symbol || 'ALL'})
               </button>
               <button 
                 onClick={() => handleTabChange("leaderboard")} 
@@ -939,8 +954,9 @@ const CoinFlipPage = () => {
             {showHistory && activeTab === "history" && gameHistory.length > 0 && (
               <ul>
                 {[...gameHistory]
-                  .filter((game) => game.wagerType === wagerType)
+                  .filter((game) => !selectedToken || game.wagerType === selectedToken.symbol)
                   .reverse()
+                  .slice(0, 10)
                   .map((game) => (
                     <li key={game.gameId} className={game.won ? "win-history" : "loss-history"}>
                       Game #{game.gameId}: Result: {game.result === "Heads" ? "Flip" : "Ski"} — 
@@ -963,7 +979,7 @@ const CoinFlipPage = () => {
             )}
 
             {showHistory && activeTab === "history" && gameHistory.length === 0 && (
-              <p>No wager history yet for {wagerType}.</p>
+              <p>No wager history yet for {selectedToken?.symbol || 'any token'}.</p>
             )}
             
             {showHistory && activeTab === "leaderboard" && (
