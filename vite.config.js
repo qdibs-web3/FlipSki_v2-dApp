@@ -15,12 +15,23 @@ export default defineConfig({
     },
   },
   plugins: [
-    react( ),
+    react(),
     nodePolyfills({
       exclude: [],
       protocolImports: true,
+      // Add specific polyfills for the missing modules
+      globals: {
+        Buffer: true,
+        global: true,
+        process: true,
+      },
     }),
   ],
+  define: {
+    // Ensure process.env is available
+    'process.env': 'process.env',
+    global: 'globalThis',
+  },
   esbuild: {
     loader: "jsx",
     include: [/src\/.*\.jsx$/, /src\/.*\.js$/],
@@ -32,7 +43,13 @@ export default defineConfig({
         ".js": "jsx",
       },
     },
-    include: ['@thirdweb-dev/react', '@thirdweb-dev/chains'],
+    include: [
+      '@thirdweb-dev/react', 
+      '@thirdweb-dev/chains',
+      'process',
+      'util',
+      'buffer'
+    ],
   },
   build: {
     sourcemap: true, // Enable source maps for debugging
@@ -48,3 +65,4 @@ export default defineConfig({
     }
   }
 });
+
