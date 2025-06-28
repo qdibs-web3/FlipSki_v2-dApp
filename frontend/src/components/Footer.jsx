@@ -12,7 +12,7 @@ const Footer = () => {
           Built by <a href="https://x.com/qdibs_eth" target="_blank" rel="noopener noreferrer">Qdibs</a>
         </span>
         <span className="footer-spacer"></span>
-        <span className="footer-credit">v1.0.3</span>
+        <span className="footer-credit">v2.0.0</span>
       </div>
     </footer>
   );

@@ -2,10 +2,16 @@ import React, { useState, useEffect } from 'react';
 import '../styles/LevelSystem.css';
 import axios from 'axios';
 
-// API base URL - automatically adjusts for development or production
-const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? '/api' 
-  : 'http://localhost:3001/api';
+// API base URL - safely check environment
+const getApiBaseUrl = () => {
+  // Use import.meta.env for Vite environment detection
+  if (import.meta.env.PROD) {
+    return '/api';
+  }
+  return 'http://localhost:3001/api';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 const LevelSystem = ({ walletAddress, gameResult }) => {
   // State
@@ -137,3 +143,4 @@ const LevelSystem = ({ walletAddress, gameResult }) => {
 };
 
 export default LevelSystem;
+
