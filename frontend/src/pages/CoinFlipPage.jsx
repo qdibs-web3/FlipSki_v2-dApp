@@ -18,11 +18,12 @@ import {
   ETH_ADDRESS,
   baseMainnet,
 } from "../config";
-import FlipSkiV2ABI from "../abis/FlipSkiV2.abi.json"; 
+import FlipSkiV2ABI from "../abis/FlipSkiV2.json"; 
 import coinImage from "../assets/flipski4.gif";
 import headsImage from "../assets/flip2.png";
 import tailsImage from "../assets/ski2.png";
 import "../styles/CoinFlipPage.css";
+import "../styles/TokenSelector_Styles.css";
 import "../styles/DualWagerTypes.css";
 import LevelSystem from "../components/LevelSystem";
 
@@ -612,7 +613,7 @@ const CoinFlipPage = () => {
         contractCallParams = {
           address: FLIPSKI_V2_CONTRACT_ADDRESS,
           abi: FlipSkiV2ABI.abi,
-          functionName: "flipCoin",
+          functionName: "flipski",
           args: [choiceAsNumber, ETH_ADDRESS, wagerInWei],
           value: wagerInWei,
           account: walletClient.account,
@@ -623,7 +624,7 @@ const CoinFlipPage = () => {
         contractCallParams = {
           address: FLIPSKI_V2_CONTRACT_ADDRESS,
           abi: FlipSkiV2ABI.abi,
-          functionName: "flipCoin",
+          functionName: "flipski",
           args: [choiceAsNumber, selectedToken.address, wagerInWei],
           account: walletClient.account,
         };
@@ -955,7 +956,6 @@ const CoinFlipPage = () => {
               <ul>
                 {[...gameHistory]
                   .filter((game) => !selectedToken || game.wagerType === selectedToken.symbol)
-                  .reverse()
                   .slice(0, 10)
                   .map((game) => (
                     <li key={game.gameId} className={game.won ? "win-history" : "loss-history"}>

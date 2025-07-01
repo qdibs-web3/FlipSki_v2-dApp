@@ -5,24 +5,30 @@
 .token-select {
   width: 100%;
   padding: 8px 12px;
-  border: 2px solid #4a90e2;
+  border: 2px solid #007bff;
   border-radius: 5px;
-  background-color: rgba(255, 255, 255, 0.9);
-  color: #333;
+  background-color: #333;
+  color: #ffffff;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   transition: border-color 0.3s ease;
+  font-family: 'MyFont';
+  font-size: 14px;
+  color: #ffffff;
+  font-weight: normal;
 }
 
 .token-select:focus {
   outline: none;
+  border: 2px solid #4a90e2;
   border-color: #007bff;
-  background-color: white;
+  background-color: #333;
 }
 
 .token-select:hover {
   border-color: #007bff;
+  border: 2px solid #4a90e2;
 }
 
 /* Update existing wager-type-control to work with token selector */
@@ -59,6 +65,7 @@
 .compact-wager-buttons button:hover {
   background-color: rgba(255, 255, 255, 0.2);
   border-color: #007bff;
+  border: 2px solid #4a90e2;
 }
 
 .compact-wager-buttons button.selected {

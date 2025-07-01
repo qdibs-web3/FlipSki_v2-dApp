@@ -20,7 +20,7 @@ export const baseMainnet = defineChain({
 });
 
 // FlipSki V2 Unified Contract Address
-export const FLIPSKI_V2_CONTRACT_ADDRESS = "0xD1a769B61C705689b0B37057C076Bd84c0F50a38"; // UPDATE THIS
+export const FLIPSKI_V2_CONTRACT_ADDRESS = "0x448eF253449bFfd25e19C571FE381a4b0E05e87b"; // UPDATE THIS
 
 // Legacy contract addresses (for migration reference)
 export const COINFLIP_CONTRACT_ADDRESS = "0x1EC9aE124af51A3f45414Bb3259f8E9bE92afbfE"; // ETH version
